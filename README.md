@@ -8,20 +8,33 @@
 
 ### 1. 安装
 
+**方式 A：一键安装脚本（推荐）**
+
 ```bash
-# 复制到你的项目
+# macOS / Linux
+./install.sh /path/to/your-project
+
+# Windows PowerShell
+.\install.ps1 -TargetPath C:\path\to\your-project
+```
+
+脚本会自动完成：复制 `.claude/` 目录、处理 CLAUDE.md 冲突、显示安装摘要。
+
+**方式 B：手动复制**
+
+```bash
 cp -r .claude /your-project/
 ```
 
 ### 2. 创建项目 CLAUDE.md
 
-从模板开始，填入你项目的真实信息：
+如果使用安装脚本，CLAUDE.md 已自动处理。手动安装的话：
 
 ```bash
 cp .claude/CLAUDE.md.template /your-project/CLAUDE.md
 ```
 
-保持 150 行以内。
+保持 150 行以内，填入你项目的技术栈、命令和架构规则。
 
 ### 3. 启动工厂
 
@@ -141,22 +154,32 @@ so that 我不需要手动追踪逾期发票。
 ## 文件结构
 
 ```
-.claude/
-├── agents/
-│   ├── researcher.md
-│   ├── debugger.md
-│   ├── planner.md
-│   ├── backend-builder.md
-│   ├── frontend-builder.md
-│   ├── test-verifier.md
-│   └── implementation-validator.md
-├── skills/
-│   └── feature-factory/
-│       └── SKILL.md
-├── commands/
-│   ├── feature-factory.md
-│   └── debug.md
-├── rules/
-│   └── builder-rules.md
-└── CLAUDE.md.template
+feature-factory/
+├── .claude/
+│   ├── agents/
+│   │   ├── researcher.md
+│   │   ├── debugger.md
+│   │   ├── planner.md
+│   │   ├── backend-builder.md
+│   │   ├── frontend-builder.md
+│   │   ├── test-verifier.md
+│   │   └── implementation-validator.md
+│   ├── skills/
+│   │   └── feature-factory/
+│   │       └── SKILL.md
+│   ├── commands/
+│   │   ├── feature-factory.md
+│   │   └── debug.md
+│   ├── rules/
+│   │   └── builder-rules.md
+│   ├── FAQ.md
+│   └── CLAUDE.md.template
+├── README.md
+├── CLAUDE.md           ← 本项目的 CLAUDE.md（安装时不覆盖目标项目的）
+├── install.sh          ← Unix/macOS 安装脚本
+├── install.ps1         ← Windows PowerShell 安装脚本
+├── CHANGELOG.md
+├── VERSION
+├── LICENSE
+└── .gitignore
 ```
