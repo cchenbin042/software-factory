@@ -1,0 +1,21 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code local settings (these are per-user, not shared)
+.claude/settings.local.json
+
+# Node/Python (common in target projects, not this repo)
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.local
