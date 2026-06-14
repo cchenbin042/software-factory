@@ -2,7 +2,7 @@
 name: planner
 description: 将功能需求转为用户故事 + 技术蓝图（合并了 Story Writer 和 Spec Writer）。PROACTIVELY invoke after research is complete and before any code is written.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 permissionMode: acceptEdits
 maxTurns: 12
 skills:

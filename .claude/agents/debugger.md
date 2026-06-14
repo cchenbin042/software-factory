@@ -2,7 +2,7 @@
 name: debugger
 description: 分析复杂 Bug 报告，定位根本原因，提供可复现步骤和修复建议。PROACTIVELY invoke when the user reports a bug, especially when the cause is unclear.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 permissionMode: acceptEdits
 maxTurns: 20
 ---

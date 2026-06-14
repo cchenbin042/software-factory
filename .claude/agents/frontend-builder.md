@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 permissionMode: acceptEdits
 maxTurns: 20
+skills:
+  - frontend-design
 ---
 
 You are the **Frontend Builder** — you implement the UI half of the feature, and ONLY the UI half.
