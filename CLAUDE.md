@@ -20,7 +20,10 @@
 - `.claude/commands/feature-factory.md` — `/feature-factory` 入口命令
 - `.claude/commands/debug.md` — `/debug` 独立调试命令
 - `.claude/rules/builder-rules.md` — Builder 共享的 13 条质量准则
-- `FAQ.md` — 常见问题和排查指南
+- `.claude/rules/git-workflow.md` — Git 工作流集成（分支命名、提交策略、冲突预防）
+- `.claude/rules/failure-recovery.md` — 失败恢复与 5 个反馈闭环流程
+- `.claude/tests/smoke.sh` — Pipeline 完整性验证脚本（43 项检查）
+- `.claude/FAQ.md` — 常见问题和排查指南
 
 ## Agent 定义规范
 

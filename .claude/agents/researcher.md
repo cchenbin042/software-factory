@@ -2,7 +2,7 @@
 name: researcher
 description: 在写任何代码之前探查代码库——映射相关文件、识别现有模式、标记风险。PROACTIVELY invoke before any feature implementation as the very first step.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 permissionMode: acceptEdits
 maxTurns: 15
 ---

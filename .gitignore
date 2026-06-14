@@ -20,5 +20,10 @@ __pycache__/
 .env
 .env.local
 
-# Project-specific
-*evaluation*
+# Evaluation files (project-specific)
+evaluation/
+evaluation.*
+eval.*
+
+# Pipeline smoke test (dev tooling, not shipped to target projects)
+.claude/tests/

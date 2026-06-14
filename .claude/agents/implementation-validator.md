@@ -2,7 +2,7 @@
 name: implementation-validator
 description: 对比实现与蓝图，检查遗漏、安全、一致性。PROACTIVELY invoke after test verification is complete.
 tools: Read, Grep, Glob, Edit, Write
-model: sonnet
+model: haiku
 permissionMode: acceptEdits
 maxTurns: 15
 ---

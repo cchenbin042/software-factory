@@ -350,7 +350,7 @@ Report both decisions to the user before proceeding: "This is a [backend/fronten
 
 ### Step 2: Create Branch and Launch Builder(s)
 
-First, create the git branch (see [Git Workflow Integration](#git-workflow-integration) for branch naming and safety checks).
+First, create the git branch (see [.claude/rules/git-workflow.md](../../rules/git-workflow.md) for branch naming and safety checks).
 
 Then launch the appropriate Builder(s). Unlike Full mode, there is no Planner blueprint. The Builder works from the user's description plus the Researcher's scan.
 
@@ -405,11 +405,11 @@ Rules:
 
 #### If Both Builders (Parallel)
 
-Launch both simultaneously. Apply the [Shared-File Conflict Prevention](#shared-file-conflict-prevention-parallel-builders) rules before launching. Use the same prompts as above, adding file ownership boundaries as needed.
+Launch both simultaneously. Apply the shared-file conflict prevention rules from [.claude/rules/git-workflow.md](../../rules/git-workflow.md) before launching. Use the same prompts as above, adding file ownership boundaries as needed.
 
-After the Builder(s) complete, commit their work (see [Commit Strategy](#commit-strategy-orchestrator-commits-builders-write)).
+After the Builder(s) complete, commit their work following the [commit strategy in git-workflow.md](../../rules/git-workflow.md).
 
-**If a Builder reports test failures**: follow the [Builder Test Failure feedback loop](#loop-2-builder-test-failure). Do not proceed to Step 3 until tests pass or the user explicitly overrides.
+**If a Builder reports test failures**: follow the [Builder Test Failure feedback loop](../../rules/failure-recovery.md#loop-2-builder-test-failure). Do not proceed to Step 3 until tests pass or the user explicitly overrides.
 
 **If a Builder reports scope creep** (needs to touch files outside the Researcher's list): pause and report to the user. This is a sign that Incremental mode may be the wrong choice — offer to escalate to Full mode.
 
@@ -460,7 +460,7 @@ Your report must follow the standard format:
 Present the Test Verifier's summary to the user.
 
 - If all criteria ✅ pass → proceed to Step 4.
-- If some criteria ❌ fail → follow the [Verifier Finds Untestable Criteria feedback loop](#loop-4-verifier-finds-untestable-criteria). The user decides whether to fix or continue.
+- If some criteria ❌ fail → follow the [Verifier Finds Untestable Criteria feedback loop](../../rules/failure-recovery.md#loop-4-verifier-finds-untestable-criteria). The user decides whether to fix or continue.
 - If some criteria ⚠️ can't be tested → note them and proceed. The Validator will see them.
 
 ### Step 4: Launch Validator
@@ -500,7 +500,7 @@ Present the Validator's report to the user.
 
 - **If CLEAN**: tell the user the change is ready for PR. Summarize what was changed and the test results. Same PR flow as Full mode — orchestrator does not create the PR.
 - **If ISSUES FOUND**: present the Important/Minor issues. Let the user decide which to fix before PR. In Incremental mode, the bar for "ship with Issues" is lower than Full mode — a minor lint inconsistency in a hotfix is acceptable.
-- **If BLOCKED**: present the Critical issues. Follow the [Validator BLOCKED feedback loop](#loop-3-validator-blocked--rollback-to-builder). If the fix requires touching files outside the Researcher's original scope, strongly consider escalating to Full mode — the "incremental" premise has broken.
+- **If BLOCKED**: present the Critical issues. Follow the [Validator BLOCKED feedback loop](../../rules/failure-recovery.md#loop-3-validator-blocked--rollback-to-builder). If the fix requires touching files outside the Researcher's original scope, strongly consider escalating to Full mode — the "incremental" premise has broken.
 
 ### Incremental Mode Boundaries — When to Escalate
 
@@ -531,305 +531,17 @@ Incremental mode works for changes that are **small and predictable**. If any of
 
 ## Git Workflow Integration
 
-The orchestrator manages git state throughout the pipeline. These conventions ensure every change is traceable, recoverable, and safe.
-
-### Branch Naming
-
-| Mode | Branch Pattern | Example |
-|------|---------------|---------|
-| Full | `feature/<slug>` | `feature/invoice-reminder` |
-| Debug | `fix/<slug>` | `fix/duplicate-invoice-emails` |
-| Incremental | `chore/<slug>` | `chore/update-error-message` |
-
-Derive `<slug>` from the user's description: lowercase, dashes, max 4 words. Strip special characters.
-
-### Branch Creation Timing
-
-Create the branch at the **start of Step 4** (Builder phase) in Full mode, or at the **start of Step 3** in Debug mode, or at the **start of Step 3** in Incremental mode. Never create a branch during research or planning — those phases are read-only.
-
-Before creating the branch:
-1. Run `git status --porcelain` — if there are uncommitted changes, warn the user. Do not create a branch from a dirty working tree unless the user explicitly approves.
-2. Run `git branch --list <branch-name>` — if the branch already exists, append `-2`, `-3`, etc. Warn the user.
-3. Run `git checkout -b <branch-name>`
-
-### Commit Strategy: Orchestrator Commits, Builders Write
-
-**Builders do NOT commit themselves.** A Builder's maxTurns is for writing code and tests — not for git operations. The orchestrator handles all git commits.
-
-#### After Each Builder Completes
-
-As soon as a Builder returns its summary (with test results all green):
-
-1. Run `git add <all files the Builder created or modified>` — use the Builder's summary to identify files. Never `git add -A` blindly.
-2. Run `git commit -m "<type>: <description>"` using Conventional Commits format:
-   - `feat:` — new feature code
-   - `fix:` — bug fixes
-   - `test:` — test files only
-   - `chore:` — config, dependencies, non-functional changes
-3. If the Builder created nothing (no-op), don't force a commit.
-
-#### Commit Granularity
-
-Aim for one commit per Builder. If the Builder touched many files across distinct concerns, split into 2-3 focused commits:
-- **Migration commit**: `feat: add migration for <thing>`
-- **Implementation commit**: `feat: implement <backend or frontend piece>`
-- **Test commit**: `test: add tests for <thing>`
-
-Never commit with `--allow-empty`. Never force-push. Never amend commits after pushing.
-
-### Shared-File Conflict Prevention (Parallel Builders)
-
-When Backend and Frontend Builders run in parallel, they may both modify shared files (package.json, tsconfig, routing registrations, etc.). This is the highest-risk scenario in the git workflow.
-
-#### Prevention: Before Builders Start
-
-1. **Identify shared-risk files** — files that both Builders might reasonably need to touch based on the Technical Brief. Common candidates:
-   - Package manifests (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`)
-   - Config files (`tsconfig.json`, `.env.example`)
-   - Route/app registrations (`app.ts`, `main.ts`, `urls.py`)
-   - Shared types or constants files
-
-2. **Assign ownership BEFORE builders launch**:
-   - If Backend Builder needs to add a dependency → Backend Builder owns `package.json`
-   - If Frontend Builder needs to add a dependency → tell Backend Builder "do NOT add dependencies; Frontend Builder will handle that"
-   - For shared config files → designate ONE builder as the owner, tell the other to leave it alone
-
-3. **Add explicit scope boundaries to Builder prompts**:
-   ```
-   Backend Builder prompt addendum:
-   "FILE OWNERSHIP: You own [list of backend files]. Do NOT modify [list of shared files owned by Frontend Builder]. If you need a change in a Frontend-owned file, note it in your summary under 'Cross-Cut Requests'."
-
-   Frontend Builder prompt addendum:
-   "FILE OWNERSHIP: You own [list of frontend files]. Do NOT modify [list of shared files owned by Backend Builder]. If you need a change in a Backend-owned file, note it in your summary under 'Cross-Cut Requests'."
-   ```
-
-#### Detection: After Both Builders Complete
-
-After both Builders return and the orchestrator has committed their changes:
-
-1. Run `git log --oneline -2` to see the two Builder commits
-2. Run `git diff HEAD~2..HEAD --name-only | sort | uniq -d` to check for files that appear in BOTH commits
-3. If duplicates exist → those files were modified by both Builders. Check if git merge already handled it (unlikely on a linear branch) or if the second commit overwrote the first.
-
-#### Resolution: When Conflicts Are Detected
-
-1. **Report to the user** with the conflicting file paths and which Builder modified each
-2. **Offer**:
-   - Let the Validator detect and report the issue (lightweight, but may leave a broken intermediate state)
-   - Re-run the second Builder with the first Builder's changes as additional context (costs time, but produces a clean result)
-   - Manual resolution (user inspects the conflicting files themselves)
-3. If the conflict is in a low-risk file (README, docs), flag it and continue — the Validator won't be blocked by cosmetic issues
-4. If the conflict is in a high-risk file (API contract, shared types, business logic), pause — do not proceed to Verifier until resolved
-
-### After Validator Passes
-
-When the Validator returns CLEAN or the user approves ISSUES FOUND:
-
-1. Run `git status --porcelain` to confirm nothing is left uncommitted
-2. Run `git log --oneline <base-branch>..HEAD` to verify the commit history is clean and conventional
-3. Tell the user:
-   ```
-   Ready for PR. Branch: <name>. Commits:
-   - <commit 1>
-   - <commit 2>
-   ...
-
-   Create PR: gh pr create --title "<conventional commit title>" --body "<summary>"
-   ```
-4. Never create the PR yourself — the final PR is the user's gate
-
-### If the Pipeline is Abandoned
-
-If the user decides not to proceed after code has been written:
-
-#### Step 1: Preserve the Work
-
-The user may abandon the pipeline but want to keep the code for later. ALWAYS preserve before cleaning up:
-
-```
-# Stash uncommitted changes with a descriptive name
-git stash push -u -m "feature-factory: [feature name] — abandoned pipeline"
-
-# Create a backup tag so the work is findable even if the branch is deleted
-git tag "ff-abandoned/$(date +%Y%m%d-%H%M%S)-<slug>"
-
-# Push the tag (optional — ask the user)
-```
-
-#### Step 2: Offer Cleanup Options
-
-Present three options:
-1. **Keep everything**: Stay on the feature branch, keep the stash. User can resume later with `git stash pop`.
-2. **Keep the branch, clean the stash**: `git checkout <original-branch>` — uncommitted changes are safe in the stash.
-3. **Full cleanup**: `git checkout <original-branch> && git stash drop && git branch -D <feature-branch>` — everything is gone, no recovery possible. Warn before doing this.
-
-**Golden rule for pipeline abandonment**: never silently discard work. The user invested time in the pipeline — the code may be partially correct. Always offer to preserve before cleaning up.
-
-#### Step 3: Verify Clean Exit
-
-After cleanup (whichever option the user chose):
-```
-git branch --show-current   # Verify we're back on the original branch
-git stash list              # Confirm stash state
-```
-
-## Failure Recovery & Degradation
-
-### Agent Timeout or Hang
-
-If an agent exceeds its `maxTurns` or produces no output for an extended period:
-
-1. **Report to the user**: which agent, what step, what was expected
-2. **Offer options**:
-   - Retry with a narrower scope (split the task)
-   - Retry with a higher `maxTurns` value
-   - Skip the agent and proceed manually (only if the user accepts the risk)
-   - Abort the pipeline
-3. **Never silently retry** — a hung agent often indicates the task is too large for a single agent instance
-
-### maxTurns Exhaustion
-
-If an agent hits `maxTurns` without completing its output:
-
-1. Read what the agent produced so far
-2. If the output is substantially complete (>80%), ask the user whether to accept it as-is or split the remaining work
-3. If the output is incomplete, launch a NEW instance with a narrower prompt scoped to the unfinished portion only
-4. If a second instance also hits maxTurns, the task is too large — ask the user to break the feature into smaller pieces
-
-### Parallel Builder Failure (One Succeeds, One Fails)
-
-When both Builders are launched in parallel and only one succeeds:
-
-1. **Preserve the successful Builder's work** — do not discard it
-2. **Report to the user**: which Builder failed, what the failure was
-3. **Offer options**:
-   - Retry the failed Builder with the same prompt
-   - Retry with a narrowed scope
-   - Continue with only the successful Builder's work (only if the failing side was optional)
-   - Abort and revert both
-4. If the user chooses to retry only the failed Builder, use the successful Builder's output as additional context for the Verifier
-
-### Incomplete Agent Output
-
-If an agent returns output that is truncated, missing required sections, or clearly cut off:
-
-1. **Check which sections are present**: compare against the agent's defined output format
-2. **If only the summary section is missing**: the agent likely ran out of turns at the very end. Ask the user whether to accept the output or request the missing section from a fresh instance.
-3. **If core sections are missing**: relaunch the agent with the prompt `"Your previous output was truncated — you were [N]% complete. Continue from where you left off: [last complete section + content]. Produce ONLY the remaining sections: [list missing sections]."`
-4. **If relaunch also fails**: the task is too large. Split and re-run.
-
-### Downstream Propagation Rule
-
-When an earlier agent's output has known issues, downstream agents MUST be told. Add a caveat to their prompt:
-
-```
-NOTE: The [agent name] output had [specific issue]. Specifically:
-- [What's wrong or missing]
-- [What to watch for]
-Proceed with awareness of this gap.
-```
-
-Never hide upstream issues from downstream agents — they will produce wrong results and the Validator catch will be the first indication of a problem.
-
-## Feedback Loop Procedures
-
-### Loop 1: Planner Revision (Blueprint Rejected)
-
-When the user rejects the Planner's blueprint:
-
-1. **Capture exactly what's wrong**: wrong story, missing acceptance criteria, bad technical design, scope too large/small
-2. **Feed back to Planner**:
-   ```
-   Agent(
-     subagent_type="planner",
-     description="Revise blueprint per user feedback",
-     prompt="Revise your User Story and Technical Brief. The user rejected the previous version.
-
-   What to change:
-   [USER'S SPECIFIC FEEDBACK — be precise, not general]
-
-   What to keep:
-   [PARTS THE USER LIKED — if any]
-
-   Previous output for reference:
-   [PLANNER'S FULL PREVIOUS OUTPUT]
-
-   Produce the FULL revised blueprint — do not reference 'changes from previous version' or explain what you changed. Output the complete User Story + Technical Brief as if it were the first draft."
-   )
-   ```
-3. **Present the revised blueprint** with a clear summary of what changed
-4. **Maximum 3 revision cycles.** If the user rejects the blueprint 3 times, the feature is too ambiguous. Pause and ask the user to clarify the core requirements in writing before continuing. More Planner cycles won't fix unclear requirements.
-
-### Loop 2: Builder Test Failure
-
-When a Builder reports test failures:
-
-1. **Read the test failure output carefully** — is it a real bug in the new code, or did an existing test break?
-2. **If new tests fail**: the Builder's code has bugs. Feed the failure output back:
-   ```
-   Agent(
-     subagent_type="backend-builder",  // or frontend-builder
-     description="Fix test failures",
-     prompt="Your previous implementation has test failures. Fix the code so all tests pass. Do NOT weaken the tests — fix the code.
-
-   Test failures:
-   [FAILURE OUTPUT]
-
-   Your previous summary:
-   [BUILDER'S OUTPUT]
-
-   Fix the implementation, re-run the tests, and produce a revised summary."
-   )
-   ```
-3. **If existing tests break**: the Builder introduced a regression. This is more serious — the Builder must fix it before proceeding. Use the same retry pattern but emphasize: "You broke existing tests. Find what your changes broke and fix it. The existing tests are correct."
-4. **Maximum 2 fix cycles per Builder.** If tests still fail after 2 fix attempts, surface to the user with the full failure output. Do not let the Verifier act as a second Builder — it only reports, it doesn't fix.
-
-### Loop 3: Validator BLOCKED — Rollback to Builder
-
-When the Validator returns BLOCKED (Critical issues exist):
-
-1. **Present every Critical issue** to the user with file paths and line numbers
-2. **Categorize by owner**:
-   - Security, data integrity, API logic → Backend Builder
-   - UI/data leaks, accessibility, client-side state → Frontend Builder
-   - Both → both Builders (sequentially — Backend first, then Frontend)
-3. **User decides**: fix all Critical issues, fix some, or adjust the acceptance criteria (if the Validator was too strict)
-4. **If fixing**: feed only the Critical (and user-selected Important) issues back to the relevant Builder:
-   ```
-   Agent(
-     subagent_type="backend-builder",
-     description="Fix critical validation issues",
-     prompt="Fix the following Critical issues found during implementation validation. Change ONLY the lines specified — do not refactor unrelated code.
-
-   Issues to fix:
-   [LIST OF ISSUES WITH FILE:PATH:LINE:RECOMMENDATION]
-
-   Your previous implementation summary:
-   [BUILDER'S OUTPUT]
-
-   After fixing, re-run typecheck, lint, and tests. Produce a summary of ONLY what you changed."
-   )
-   ```
-5. **After fixes**: re-run Verifier → re-run Validator
-6. **Maximum 2 rollback cycles.** If BLOCKED again after 2 fix cycles, the Technical Brief and User Story may need adjustment — escalate to the user for a design-level decision.
-
-### Loop 4: Verifier Finds Untestable Criteria
-
-When the Test Verifier reports criteria that can't be tested cleanly:
-
-1. **Distinguish the cause**:
-   - **Implementation gap**: the code doesn't expose a way to verify the criterion → flag as a Builder issue
-   - **Test infrastructure gap**: the project lacks the test tooling needed (e.g., no E2E framework, no email capture) → note as a tooling limitation
-   - **Ambiguous criterion**: the acceptance criterion itself is vague ("the system should be fast") → flag as a Planner issue
-2. **If it's an implementation gap**: feed back to the relevant Builder
-3. **If it's a test infrastructure gap**: note in the Validator's input — this is a known constraint, not an oversight
-4. **If it's an ambiguous criterion**: surface to the user — the criterion needs rewriting
-
-### Loop 5: Researcher Raises Blocking Questions
-
-When the Researcher's report contains open questions that block the Planner:
-
-1. **Surface blocking questions to the user immediately** — do not launch the Planner
-2. **User answers** → feed answers to the Planner as additional context
-3. **User can't answer** → the Planner must treat these as explicit "Open Questions" in the blueprint and make reasonable assumptions (documented as assumptions, not silently baked in)
-4. **If too many blocking questions (>5)**: the feature request is too vague. Ask the user to rewrite with more detail rather than playing 20 questions.
+See [.claude/rules/git-workflow.md](../../rules/git-workflow.md) for the full git workflow specification, covering:
+- Branch naming conventions and creation timing
+- Commit strategy (orchestrator commits, builders write)
+- Shared-file conflict prevention for parallel builders
+- Pipeline abandonment preservation procedures
+
+## Failure Recovery & Feedback Loops
+
+See [.claude/rules/failure-recovery.md](../../rules/failure-recovery.md) for the complete failure handling specification, covering:
+- Agent timeout, hang, and maxTurns exhaustion recovery
+- Parallel builder partial failure (one succeeds, one fails)
+- Incomplete agent output recovery
+- All 5 feedback loops (Planner revision, Builder test failure, Validator BLOCKED, Verifier untestable criteria, Researcher blocking questions)
+- Downstream propagation rule for known upstream issues

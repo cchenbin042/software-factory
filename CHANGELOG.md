@@ -12,6 +12,24 @@
 
 ---
 
+## [1.3.1] — 2026-06-14
+
+### Changed
+- **Agent 模型分级**：深度推理型 Agent（researcher、planner、debugger）→ `opus`；Builder（backend、frontend）保持 `sonnet`；验证型 Agent（test-verifier、implementation-validator）→ `haiku`。按认知负载匹配模型能力，在质量和成本间平衡
+- **SKILL.md 拆分**：将 Git Workflow Integration（~150 行）和 Failure Recovery & Feedback Loops（~80 行）提取为独立规则文件 `.claude/rules/git-workflow.md` 和 `.claude/rules/failure-recovery.md`。SKILL.md 保留简要概述和交叉引用链接，从 ~830 行缩减至 ~600 行
+- **test-verifier maxTurns**：从 15 提升至 20，匹配其实际工作量（需读取两份 Builder 输出 + 编写验收测试 + 运行测试）
+
+### Fixed
+- **CLAUDE.md 路径**：FAQ.md 引用从根目录修正为 `.claude/FAQ.md`（与文件实际位置一致）
+- **.gitignore 评估规则**：`*evaluation*` 全局通配变为更精确的 `evaluation/`、`evaluation.*`、`eval.*`，避免在目标项目中意外忽略含 "evaluation" 子串的文件
+
+### Added
+- CLAUDE.md 关键文件列表新增 `git-workflow.md` 和 `failure-recovery.md` 引用
+- **Pipeline smoke test**（`.claude/tests/smoke.sh`）：43 项自动化检查，覆盖 Agent frontmatter 验证、工具权限审计、命令路由检查、SKILL.md subagent 引用完整性、跨文件链接校验、模型分级确认。运行：`bash .claude/tests/smoke.sh`
+- **Frontend Builder 集成 frontend-design Skill**：Agent frontmatter 新增 `skills: [frontend-design]`，启动时自动加载排版、色彩、动效、空间构成和氛围设计原则
+
+---
+
 ## [1.3.0] — 2026-06-13
 
 ### Added
