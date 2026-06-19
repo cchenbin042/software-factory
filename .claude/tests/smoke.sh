@@ -330,6 +330,65 @@ fi
     fail "domain-modeling: missing reference"
   fi
 
+# ─── 9. Prompt Template Integrity ──────────────────────────────
+
+echo ""
+echo "── Prompt Templates ──"
+
+PROMPTS_DIR="$ROOT/.claude/skills/feature-factory/prompts"
+
+if [ -d "$PROMPTS_DIR" ]; then
+
+  # Full Mode: 6 files expected
+  FULL_EXPECTED=6
+  FULL_COUNT=$(ls "$PROMPTS_DIR/full-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l || echo 0)
+  if [ "$FULL_COUNT" -eq "$FULL_EXPECTED" ]; then
+    pass "prompts/full-mode/: $FULL_COUNT/$FULL_EXPECTED prompt files"
+  else
+    fail "prompts/full-mode/: $FULL_COUNT/$FULL_EXPECTED prompt files (expected $FULL_EXPECTED)"
+  fi
+
+  # Debug Mode: 5 files expected
+  DEBUG_EXPECTED=5
+  DEBUG_COUNT=$(ls "$PROMPTS_DIR/debug-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l || echo 0)
+  if [ "$DEBUG_COUNT" -eq "$DEBUG_EXPECTED" ]; then
+    pass "prompts/debug-mode/: $DEBUG_COUNT/$DEBUG_EXPECTED prompt files"
+  else
+    fail "prompts/debug-mode/: $DEBUG_COUNT/$DEBUG_EXPECTED prompt files (expected $DEBUG_EXPECTED)"
+  fi
+
+  # Incremental Mode: 5 files expected
+  INCR_EXPECTED=5
+  INCR_COUNT=$(ls "$PROMPTS_DIR/incremental-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l || echo 0)
+  if [ "$INCR_COUNT" -eq "$INCR_EXPECTED" ]; then
+    pass "prompts/incremental-mode/: $INCR_COUNT/$INCR_EXPECTED prompt files"
+  else
+    fail "prompts/incremental-mode/: $INCR_COUNT/$INCR_EXPECTED prompt files (expected $INCR_EXPECTED)"
+  fi
+
+  # Shared: 4 files expected
+  SHARED_EXPECTED=4
+  SHARED_COUNT=$(ls "$PROMPTS_DIR/shared/"*.md 2>/dev/null | grep -v .gitkeep | wc -l || echo 0)
+  if [ "$SHARED_COUNT" -eq "$SHARED_EXPECTED" ]; then
+    pass "prompts/shared/: $SHARED_COUNT/$SHARED_EXPECTED prompt files"
+  else
+    fail "prompts/shared/: $SHARED_COUNT/$SHARED_EXPECTED prompt files (expected $SHARED_EXPECTED)"
+  fi
+
+  # Every prompt file must contain a subagent_type (except shared templates)
+  for f in "$PROMPTS_DIR"/full-mode/*.md "$PROMPTS_DIR"/debug-mode/*.md "$PROMPTS_DIR"/incremental-mode/*.md; do
+    [ "$(basename "$f")" = ".gitkeep" ] && continue
+    if grep -q 'subagent_type=' "$f"; then
+      pass "  $(basename "$f"): contains subagent_type"
+    else
+      fail "  $(basename "$f"): missing subagent_type reference"
+    fi
+  done
+
+else
+  fail "prompts/ directory missing"
+fi
+
 # ─── Summary ───────────────────────────────────────────────────
 
 echo ""
