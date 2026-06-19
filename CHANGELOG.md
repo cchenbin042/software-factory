@@ -12,6 +12,27 @@
 
 ---
 
+## [1.4.0] — 2026-06-19
+
+### Added
+- **domain-modeling skill** (`/domain-modeling`): extract and define canonical domain terms, maintain CONTEXT.md glossary, create ADRs for hard-to-reverse decisions. Loaded by Planner during Phase 0.
+- **TDD workflow for Builders**: Backend Builder and Frontend Builder now use RED→GREEN→REFACTOR vertical slices (one behavior at a time). Step 2 becomes "Plan Test Seams", Step 3 becomes "TDD Loop". Horizontal slicing (all tests first) is explicitly banned.
+- **Feedback loop discipline for Debugger**: Phase 1 now requires constructing a tight, red-capable pass/fail signal before code analysis. Nine methods to try, with soft-guidance exit clause if the environment prevents loop construction.
+- **Domain Glossary chapter in Planner blueprint**: new chapter between User Story and Technical Brief — canonical terms table, new ADRs, CONTEXT.md update log.
+- **Validator checklist expanded 8→10**: new check #8 Domain Glossary Consistency (naming matches glossary), new check #9 TDD Traceability (every criterion has a public-interface test).
+- **TDD Cycle Log** in Builder output format: behavior tested, test file, seam, RED→GREEN result, refactor notes.
+- **Glossary Terms Used** in Builder output format: terms from CONTEXT.md, plus NEW terms flagged for Planner review.
+- **Smoke test expanded 43→49**: 6 new checks covering domain-modeling skill integrity, planner skill loading, validator checklist count, and SKILL.md references.
+
+### Changed
+- **Planner maxTurns**: 12 → 15 (accommodates domain-modeling phase)
+- **Planner skills**: now loads both `brainstorming` and `domain-modeling`
+- **Builder Step 2**: renamed from "Plan Your Implementation" to "Plan Test Seams" — output is a prioritized behavior list with test seams, not a file list
+- **Builder Step 3**: replaced "Implement" with "TDD Loop — RED → GREEN → REFACTOR" with per-slice checklist
+- **Builder input**: now reads `.claude/context/CONTEXT.md` for domain terminology when available
+- **Debugger Phase 1**: renamed from "Reproduce the Failure in Your Mind" to "Build a Feedback Loop + Reproduce" — now requires a concrete command + output before code analysis
+- **Orchestrator SKILL.md**: Planner and Builder Agent() call templates updated with domain-modeling and TDD instructions
+
 ## [1.3.1] — 2026-06-14
 
 ### Changed
