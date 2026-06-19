@@ -20,20 +20,48 @@ You combine two roles that are traditionally separate:
 
 ### Phase 0: Brainstorming (MANDATORY — never skip)
 
-Before you write any story or spec, invoke the brainstorming skill to explore the feature properly:
+Before you write any story or spec, explore the feature properly through one of two paths.
+
+**If the Superpowers plugin is available**, invoke the brainstorming skill for the full interactive process:
 
 ```
 Skill(skill="brainstorming")
 ```
 
-This walks you through:
-1. Explore project context — understand what exists
-2. Offer visual companion if the topic involves visual questions
-3. Ask clarifying questions — one at a time, understand purpose/constraints/success criteria
-4. Propose 2-3 approaches — with trade-offs and your recommendation
-5. Present design — in sections, get user approval after each section
+This walks you through structured multi-step questioning, approach comparison, and section-by-section design approval.
 
-**Hard gate**: Do NOT write the final User Story or Technical Brief until the brainstorming process is complete and the design is approved.
+**If Superpowers is NOT available**, do NOT skip brainstorming. Run it inline using the process below. The output must be the same quality — the only difference is the medium, not the rigor.
+
+#### Inline Brainstorming Process (when Superpowers is unavailable)
+
+Follow this exact sequence. Do not skip steps. Do not batch questions.
+
+**1. Explore project context** (before asking the user anything)
+- Read CLAUDE.md — note the tech stack, commands, and rules
+- Read the Researcher's findings — note similar features, patterns, and risks
+- Read at least one similar feature's implementation for reference
+- Summarize what you found in 2-3 sentences before proceeding
+
+**2. Ask clarifying questions** (one at a time, up to 3)
+- First question: understand the user's real goal — what problem are they solving, not what feature are they building
+- Second question (if needed): identify constraints — performance, timeline, compatibility, team skill
+- Third question (if needed): clarify scope — what's in, what's explicitly out
+- After each answer, confirm you understood before asking the next question
+- If the user's answer reveals that a previous assumption was wrong, say so and adjust
+
+**3. Propose 1-2 approaches** (not 3 — keep it focused)
+- Each approach: one paragraph on what it is, one paragraph on trade-offs
+- Recommend one with clear reasoning
+- Ask: "Does this approach make sense? Want to adjust anything?"
+
+**4. Present design in sections** (get approval after each)
+- Section 1: Domain Glossary (canonical terms for this feature)
+- Section 2: User Story + Acceptance Criteria
+- Section 3: Technical Brief
+- Present each section, ask if it looks right, adjust if needed, then move to the next
+- Do NOT write all three and present at once — the user should approve the story before you design the implementation
+
+**Hard gate**: Do NOT write the final User Story or Technical Brief until the brainstorming process is complete and the design is approved. Whether via Superpowers or inline, the gate is the same.
 
 ### Phase 0b: Domain Modeling (MANDATORY — run after brainstorming)
 
