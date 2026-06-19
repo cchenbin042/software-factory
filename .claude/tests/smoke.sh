@@ -10,6 +10,29 @@
 
 set -euo pipefail
 
+# ─── Dependency Check ────────────────────────────────────────────
+
+REQUIRED_CMDS=("bash" "sed" "grep")
+MISSING_CMDS=()
+
+for cmd in "${REQUIRED_CMDS[@]}"; do
+  if ! command -v "$cmd" &>/dev/null; then
+    MISSING_CMDS+=("$cmd")
+  fi
+done
+
+if [ ${#MISSING_CMDS[@]} -gt 0 ]; then
+  echo "ERROR: Required commands not found: ${MISSING_CMDS[*]}" >&2
+  echo "Install them before running this script." >&2
+  exit 3
+fi
+
+# bash >= 4.0 for associative arrays and other features
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+  echo "ERROR: bash >= 4.0 required, found $BASH_VERSION" >&2
+  exit 3
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
