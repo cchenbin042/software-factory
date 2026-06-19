@@ -149,8 +149,6 @@ feature-factory/
 ├── LICENSE
 └── README.md
 ```
-
-- **向魔搭社区上传时**：`SKILL.md` 是唯一入口，`references/`、`scripts/`、`assets/` 为捆绑资源
 - **在本仓库中**：`.claude/` 是从 `references/` 镜像的副本，确保本项目自身可运行 `/software-factory`
 
 ---
