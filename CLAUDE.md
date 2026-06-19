@@ -9,7 +9,7 @@
 ## 组件架构
 
 ```
-/feature-factory (Command) → feature-factory (Skill) → 7 Agents
+/software-factory (Command) → feature-factory (Skill) → 7 Agents
 /debug (Command) → debugger (Agent)
 ```
 
@@ -17,7 +17,7 @@
 
 - `.claude/agents/*.md` — 7 个 Agent 定义（YAML frontmatter + body）
 - `.claude/skills/feature-factory/SKILL.md` — 编排 Skill，定义三种模式的完整流水线
-- `.claude/commands/feature-factory.md` — `/feature-factory` 入口命令
+- `.claude/commands/software-factory.md` — `/software-factory` 入口命令
 - `.claude/commands/debug.md` — `/debug` 独立调试命令
 - `.claude/rules/builder-rules.md` — Builder 共享的 13 条质量准则
 - `.claude/rules/git-workflow.md` — Git 工作流集成（分支命名、提交策略、冲突预防）
