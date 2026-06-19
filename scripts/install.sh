@@ -36,12 +36,12 @@ if [ "$USER_MODE" = false ] && [ ! -d "$TARGET" ]; then
   exit 1
 fi
 
-# ── Source directory (where this script lives) ────────────────
-SRC="$(cd "$(dirname "$0")" && pwd)"
+# ── Source directory (one level above script, which is project root) ─
+SRC="$(cd "$(dirname "$0")/.." && pwd)"
 
 # ── Check for existing Feature Factory installation ───────────
 if [ "$USER_MODE" = true ]; then
-  if [ -d "$TARGET/agents" ] && [ -d "$TARGET/skills/feature-factory" ]; then
+  if [ -d "$TARGET/agents" ] && [ -d "$TARGET/skills/domain-modeling" ]; then
     echo "Feature Factory may already be installed at the user level."
     echo "Overwrite? (y/N)"
     read -r REPLY
@@ -50,7 +50,7 @@ if [ "$USER_MODE" = true ]; then
       *) echo "Aborted."; exit 0 ;;
     esac
   fi
-elif [ -d "$TARGET/.claude/agents" ] && [ -d "$TARGET/.claude/skills/feature-factory" ]; then
+elif [ -d "$TARGET/.claude/agents" ] && [ -d "$TARGET/.claude/skills/domain-modeling" ]; then
   echo "Feature Factory may already be installed in this project."
   echo "Overwrite? (y/N)"
   read -r REPLY
@@ -97,7 +97,7 @@ else
   echo "Installed files:"
 fi
 echo "  .claude/agents/          — 7 specialized agents"
-echo "  .claude/skills/          — Feature Factory orchestrator + domain-modeling"
+echo "  .claude/skills/          — domain-modeling skill (Planner integration)"
 echo "  .claude/commands/        — /software-factory and /debug"
 echo "  .claude/rules/           — Builder shared rules"
 echo "  .claude/FAQ.md           — Troubleshooting guide"
@@ -134,10 +134,10 @@ echo "brainstorming. Without it, Planner falls back to an inline"
 echo "process that works but is less polished."
 echo ""
 echo "Install it for the full experience:"
-echo "  claude plugins install anthropics/superpowers"
+echo "  claude plugins install superpowers@superpowers-marketplace"
 echo ""
 read -p "Install Superpowers now? [Y/n] " answer
 if [ "$answer" != "n" ] && [ "$answer" != "N" ]; then
-  claude plugins install anthropics/superpowers 2>/dev/null || \
+  claude plugins install superpowers@superpowers-marketplace 2>/dev/null || \
     echo "  → Skipped (claude CLI not available in this environment)"
 fi
