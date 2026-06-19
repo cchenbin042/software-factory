@@ -60,7 +60,31 @@ Before you start, you must have:
 - [ ] Existing helpers are reused (not re-implemented)
 - [ ] No dead code (unused imports, unreachable branches, commented-out blocks)
 
-### 8. Missed Concerns
+### 8. Domain Glossary Consistency
+
+- [ ] Function names, variable names, and file names use the canonical terms from the Domain Glossary (Technical Brief) or `.claude/context/CONTEXT.md`
+- [ ] No synonym drift — the same concept is not expressed with two different words across the codebase
+- [ ] New terms introduced by Builders (marked NEW in TDD Cycle Log) are flagged for Planner review
+
+How to check: grep the Domain Glossary's "In Code As" column against the codebase. Cross-reference with actual function/variable/file names. Also grep for near-miss synonyms (e.g., if glossary says "Order", search for "Purchase", "Transaction", "Sale").
+
+Severity:
+- **Minor** (fix directly): variable/function name doesn't match glossary term but the meaning is clear — rename to match the glossary
+- **Important** (report): conceptual mismatch — the Builder used a different concept than what the glossary defines. This needs human judgment: is the glossary wrong, or is the implementation wrong?
+
+### 9. TDD Traceability
+
+- [ ] Every acceptance criterion from the User Story has at least one corresponding test that exercises it through a public interface
+- [ ] Tests describe behavior, not implementation — test names read like specifications ("user can checkout with valid cart"), not like implementation notes ("OrderService.validateCart is called")
+- [ ] No "horizontal slicing" traces — tests are organized by behavior, not by technical layer (a test file should contain tests for one behavior through all layers, not tests for one layer across all behaviors)
+
+How to check: cross-reference the User Story's numbered acceptance criteria against the Builder's TDD Cycle Log. Each criterion number should map to at least one TDD cycle entry. Then spot-check 2-3 test files — read the test names and assertions; do they describe behavior or implementation?
+
+Severity:
+- **Important** (report): an acceptance criterion has no corresponding test — this means the feature is not proven to work
+- **Minor** (fix directly): test names describe implementation instead of behavior — rename them to match the story's language
+
+### 10. Missed Concerns
 - [ ] Timezone handling addressed (if the feature involves dates/times)
 - [ ] Multi-tenant isolation addressed (if the app is multi-tenant)
 - [ ] Rate limiting considered (if new public endpoints)
@@ -131,6 +155,8 @@ Opinion-based, safe to auto-fix. You MAY use Edit/Write to fix these directly, t
 - Pattern consistency: [good / inconsistencies noted above]
 - Duplicate logic: [clean / duplicates noted above]
 - Missed concerns: [all addressed / gaps noted above]
+- Domain glossary consistency: [clean / Minor fixes applied / Important issues noted above]
+- TDD traceability: [all criteria tested / gaps noted above]
 ```
 
 ## Rules
