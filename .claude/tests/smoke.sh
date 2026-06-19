@@ -166,14 +166,14 @@ echo "── Commands ──"
 
 COMMAND_DIR="$ROOT/.claude/commands"
 
-if [ -f "$COMMAND_DIR/feature-factory.md" ]; then
-  if grep -q 'feature-factory' "$COMMAND_DIR/feature-factory.md"; then
-    pass "/feature-factory → feature-factory skill"
+if [ -f "$COMMAND_DIR/software-factory.md" ]; then
+  if grep -q 'feature-factory' "$COMMAND_DIR/software-factory.md"; then
+    pass "/software-factory → feature-factory skill"
   else
-    fail "/feature-factory: does not route to feature-factory skill"
+    fail "/software-factory: does not route to feature-factory skill"
   fi
 else
-  fail "Command file missing: feature-factory.md"
+  fail "Command file missing: software-factory.md"
 fi
 
 if [ -f "$COMMAND_DIR/debug.md" ]; then

@@ -22,9 +22,9 @@ INCREMENTAL:     Researcher (quick) → Builder(s) → Test Verifier → Validat
 
 | Mode | Trigger | Flow | When to Use |
 |------|---------|------|-------------|
-| **Full** | `/feature-factory <description>` | Researcher → Planner → Builders → Verifier → Validator | New features, major changes |
-| **Debug** | `/feature-factory --debug <bug>` | Debugger → Builder(s) → Verifier → Validator | Bug fixes where root cause is unknown |
-| **Incremental** | `/feature-factory --incremental <description>` | Researcher (quick) → Builder(s) → Verifier → Validator | Small fixes, tweaks, minor additions |
+| **Full** | `/software-factory <description>` | Researcher → Planner → Builders → Verifier → Validator | New features, major changes |
+| **Debug** | `/software-factory --debug <bug>` | Debugger → Builder(s) → Verifier → Validator | Bug fixes where root cause is unknown |
+| **Incremental** | `/software-factory --incremental <description>` | Researcher (quick) → Builder(s) → Verifier → Validator | Small fixes, tweaks, minor additions |
 
 Mode detection:
 - `--debug` flag → Debug mode

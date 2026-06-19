@@ -33,7 +33,7 @@ Present the Root Cause Analysis Report to the user. Then ask:
 
 > 需要我直接修复吗？如果需要，我可以：
 > - **直接修** — 在当前对话中应用修复
-> - **走流水线** — 通过 `/feature-factory --incremental` 让 Builder + Verifier + Validator 处理
+> - **通过 `/software-factory --incremental`** — 让 Builder + Verifier + Validator 处理
 
 Let the user choose.
 

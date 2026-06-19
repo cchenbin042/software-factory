@@ -4,13 +4,13 @@ argument-hint: <feature> | --debug <bug> | --incremental <change>
 model: sonnet
 ---
 
-# /feature-factory — Software Factory Entry Point
+# /software-factory — Software Factory Entry Point
 
 You are the entry point for the software factory. Your job is to parse the user's input and invoke the feature-factory skill.
 
 ## What You Do
 
-1. Read the user's full input after `/feature-factory`
+1. Read the user's full input after `/software-factory`
 2. Pass it directly to the feature-factory skill — the skill handles mode detection (Full vs Debug vs Incremental)
 3. Delegate all work to the feature-factory skill
 
@@ -19,7 +19,7 @@ You are the entry point for the software factory. Your job is to parse the user'
 ```
 Skill(
   skill="feature-factory",
-  args="[USER'S FULL INPUT AFTER /feature-factory]"
+  args="[USER'S FULL INPUT AFTER /software-factory]"
 )
 ```
 
