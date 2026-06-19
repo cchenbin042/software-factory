@@ -150,7 +150,8 @@ bash .claude/tests/smoke.sh
 ### Added
 - 7 个 Agent：Researcher、Debugger、Planner、Backend Builder、Frontend Builder、Test Verifier、Implementation Validator
 - Feature Factory 编排 Skill：Full、Debug、Incremental 三种模式
-- `/feature-factory` 和 `/debug` 入口命令
+- `/feature-factory` → `/software-factory` 入口命令
+- `/debug` 入口命令
 - builder-rules.md：Builder 共享的 13 条质量准则
 - CLAUDE.md.template：目标项目配置模板
 - 人审关卡：蓝图审批、PR 审批
