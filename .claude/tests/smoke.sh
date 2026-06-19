@@ -165,8 +165,9 @@ SKILL_FILE="$ROOT/.claude/skills/feature-factory/SKILL.md"
 if [ ! -f "$SKILL_FILE" ]; then
   fail "SKILL.md missing"
 else
-  # Extract all subagent_type references
-  refs=$(grep -o 'subagent_type="[^"]*"' "$SKILL_FILE" | sed 's/subagent_type="//;s/"//' | sort -u)
+  # Extract all subagent_type references from SKILL.md AND prompt files
+  PROMPT_DIR="$ROOT/.claude/skills/feature-factory/prompts"
+  refs=$( (grep -oh 'subagent_type="[^"]*"' "$SKILL_FILE" 2>/dev/null; grep -roh 'subagent_type="[^"]*"' "$PROMPT_DIR" 2>/dev/null) | sed 's/subagent_type="//;s/"//' | sort -u)
 
   for ref in $refs; do
     if echo "${AGENTS[@]}" | grep -q "$ref"; then
@@ -322,12 +323,12 @@ else
   fail "implementation-validator: only $validator_count checklist items (expected >= 10)"
 fi
 
-# SKILL.md must reference domain-modeling in Planner invocation
-if grep -q 'domain-modeling' "$SKILL_FILE"; then
-  pass "SKILL.md: references domain-modeling"
-else
-  fail "SKILL.md: missing domain-modeling reference"
-fi
+  # SKILL.md or planner prompt must reference domain-modeling
+  if grep -q 'domain-modeling' "$SKILL_FILE" || grep -rq 'domain-modeling' "$PROMPT_DIR"; then
+    pass "domain-modeling: referenced (in SKILL.md or prompt templates)"
+  else
+    fail "domain-modeling: missing reference"
+  fi
 
 # ─── Summary ───────────────────────────────────────────────────
 
