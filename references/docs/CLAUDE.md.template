@@ -1,0 +1,88 @@
+# CLAUDE.md — 项目模板
+
+> 这是 CLAUDE.md 模板。为每个使用 Agent Teams 的项目定制此文件。
+> 保持 150 行以内。详细架构文档放 `docs/` 目录。
+> 每次 AI 犯的错让你意外时，问自己：如果 CLAUDE.md 里有一条规则能避免它吗？如果能，加进来。
+
+## 技术栈
+
+<!-- 根据项目实际情况填写。删除不相关的示例，保留你的语言/框架。 -->
+
+<!-- TypeScript / Node.js 示例 -->
+<!--
+- **语言**: TypeScript
+- **前后端**: Next.js App Router
+- **数据库**: PostgreSQL + Prisma ORM
+- **队列**: BullMQ + Redis
+- **测试**: Vitest + Testing Library
+-->
+
+<!-- Python 示例 -->
+<!--
+- **语言**: Python 3.12+
+- **框架**: FastAPI
+- **数据库**: PostgreSQL + SQLAlchemy
+- **队列**: Celery + Redis
+- **测试**: pytest + pytest-asyncio
+-->
+
+<!-- Go 示例 -->
+<!--
+- **语言**: Go 1.22+
+- **框架**: net/http + chi router
+- **数据库**: PostgreSQL + sqlc
+- **队列**: River
+- **测试**: stdlib testing + testify
+-->
+
+<!-- Rust 示例 -->
+<!--
+- **语言**: Rust (stable)
+- **框架**: Actix Web
+- **数据库**: PostgreSQL + sqlx
+- **测试**: cargo test + tokio::test
+-->
+
+## 常用命令
+
+```bash
+# 开发
+# npm run dev / make dev / cargo run / go run ./...
+
+# 测试
+# npm test / pytest / go test ./... / cargo test
+
+# 代码质量
+# npm run lint / ruff check . / golangci-lint run / cargo clippy
+```
+
+<!-- 根据项目技术栈填写实际命令，删除未使用的示例 -->
+
+## 架构规则
+
+<!-- 这些是强制性的架构决策。根据项目实际情况修改或删除。 -->
+1. **业务逻辑放在 services 中**。API routes/handlers 保持薄层——验证输入，调用 service，返回响应。
+2. **每个 migration 必须有回滚方案**。禁止不可逆的迁移进入代码库。
+3. **错误处理统一**：使用项目定义的错误类/错误处理模式。不要把原始错误堆栈抛给客户端。
+4. **时区**：所有日期时间以 UTC 存储。在显示层转换为用户时区。
+
+<!-- 多租户项目：取消下面注释
+5. **多租户**: 所有查询必须按 `tenantId` 限定范围。绝不从用户输入中信任 `tenantId`。
+-->
+
+## 禁止做的事
+
+<!-- 这些是历史教训——AI 犯过这些错，不要重蹈覆辙。按项目实际填写。 -->
+- ❌ 不要在日志中记录敏感数据（密码、token、支付信息、PII）
+- ❌ 不要在客户端代码中直接访问数据库
+- ❌ 不要发明新的 API 模式——使用项目中已有的模式
+- ❌ 不要在未经过 Planner 审批的情况下添加依赖
+
+## 参考文档
+
+<!-- 可选——指向更详细的文档，按需加载。如不存在，删除这些行即可。 -->
+<!--
+- [架构总览](docs/architecture.md)
+- [认证流程](docs/auth.md)
+- [测试策略](docs/testing.md)
+-->

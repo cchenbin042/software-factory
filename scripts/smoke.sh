@@ -34,7 +34,31 @@ if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Auto-detect source layout.
+# "source repo" layout: scripts/ lives under project root, which has SKILL.md + references/
+if [ -f "$SCRIPT_DIR/../SKILL.md" ]; then
+  ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  AGENT_DIR="$ROOT/references/agents"
+  PROMPTS_DIR="$ROOT/references/prompts"
+  SKILL_FILE="$ROOT/SKILL.md"
+  COMMAND_DIR="$ROOT/references/commands"
+  RULES_DIR="$ROOT/references/rules"
+  DM_DIR="$ROOT/references/domain-modeling"
+  CLAUDE_MD="$ROOT/CLAUDE.md"
+  MODE="source"
+else
+  # "installed" layout: .claude/agents, .claude/rules, etc.
+  ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  AGENT_DIR="$ROOT/agents"
+  PROMPTS_DIR=""
+  SKILL_FILE=""
+  COMMAND_DIR="$ROOT/commands"
+  RULES_DIR="$ROOT/rules"
+  DM_DIR="$ROOT/skills/domain-modeling"
+  CLAUDE_MD=""
+  MODE="installed"
+fi
 
 # ─── CI Mode ─────────────────────────────────────────────────────
 # In CI mode, warnings don't affect the exit code.
@@ -67,7 +91,6 @@ echo ""
 
 echo "── Agents ──"
 
-AGENT_DIR="$ROOT/.claude/agents"
 REQUIRED_AGENT_FIELDS=("name" "description" "tools" "model" "maxTurns")
 VALID_MODELS=("sonnet" "opus" "haiku" "fable")
 AGENTS=("researcher" "planner" "debugger" "backend-builder" "frontend-builder" "test-verifier" "implementation-validator")
@@ -164,8 +187,6 @@ done
 echo ""
 echo "── Commands ──"
 
-COMMAND_DIR="$ROOT/.claude/commands"
-
 if [ -f "$COMMAND_DIR/software-factory.md" ]; then
   if grep -q 'feature-factory' "$COMMAND_DIR/software-factory.md"; then
     pass "/software-factory → feature-factory skill"
@@ -188,17 +209,16 @@ fi
 
 # ─── 4. SKILL.md Subagent References ───────────────────────────
 
+# Only for source layout
+if [ "$MODE" = "source" ]; then
 echo ""
 echo "── SKILL.md References ──"
-
-SKILL_FILE="$ROOT/.claude/skills/feature-factory/SKILL.md"
 
 if [ ! -f "$SKILL_FILE" ]; then
   fail "SKILL.md missing"
 else
   # Extract all subagent_type references from SKILL.md AND prompt files
-  PROMPT_DIR="$ROOT/.claude/skills/feature-factory/prompts"
-  refs=$( (grep -oh 'subagent_type="[^"]*"' "$SKILL_FILE" 2>/dev/null; grep -roh 'subagent_type="[^"]*"' "$PROMPT_DIR" 2>/dev/null) | sed 's/subagent_type="//;s/"//' | sort -u)
+  refs=$( (grep -oh 'subagent_type="[^"]*"' "$SKILL_FILE" 2>/dev/null; grep -roh 'subagent_type="[^"]*"' "$PROMPTS_DIR" 2>/dev/null) | sed 's/subagent_type="//;s/"//' | sort -u)
 
   for ref in $refs; do
     if echo "${AGENTS[@]}" | grep -q "$ref"; then
@@ -208,19 +228,17 @@ else
     fi
   done
 
-  # Check for broken relative links (../../rules/...)
-  # Extract link targets, strip #anchor suffixes for file existence check
-  links=$(grep -o '\[.*\](\.\./\.\./[^)]*' "$SKILL_FILE" | sed 's/.*\](//' || true)
-  for raw_link in $links; do
-    # Strip markdown anchor (#...) for file existence check
-    link=$(echo "$raw_link" | sed 's/#.*//')
-    target=$(echo "$link" | sed 's|../../|.claude/|')
-    if [ -f "$ROOT/$target" ]; then
+  # Check for broken relative links
+  links=$(grep -oP '\[.*?\]\(\K[^)]+' "$SKILL_FILE" | grep -v '^https\?://' || true)
+  for link in $links; do
+    clean_link=$(echo "$link" | sed 's/#.*//')
+    if [ -f "$ROOT/$clean_link" ]; then
       pass "link: $link → exists"
     else
-      fail "broken link: $link → $ROOT/$target not found"
+      fail "broken link: $link → $ROOT/$clean_link not found"
     fi
   done
+fi
 fi
 
 # ─── 5. Rule Files ─────────────────────────────────────────────
@@ -228,7 +246,6 @@ fi
 echo ""
 echo "── Rule Files ──"
 
-RULES_DIR="$ROOT/.claude/rules"
 EXPECTED_RULES=("builder-rules.md" "git-workflow.md" "failure-recovery.md")
 
 for rule in "${EXPECTED_RULES[@]}"; do
@@ -282,14 +299,16 @@ done
 
 # ─── 7. Cross-Reference Integrity ──────────────────────────────
 
+# Only for source layout
+if [ "$MODE" = "source" ]; then
 echo ""
 echo "── Cross-References ──"
 
 # Verify FAQ.md path in CLAUDE.md
-if grep -q '\.claude/FAQ\.md' "$ROOT/CLAUDE.md"; then
-  pass "CLAUDE.md references .claude/FAQ.md (correct path)"
+if grep -qE 'FAQ\.md' "$CLAUDE_MD"; then
+  pass "CLAUDE.md references FAQ.md"
 else
-  fail "CLAUDE.md: FAQ.md path may be incorrect"
+  fail "CLAUDE.md: FAQ.md reference missing"
 fi
 
 # Verify VERSION file is readable and non-empty
@@ -299,13 +318,12 @@ if [ -f "$ROOT/VERSION" ] && [ -s "$ROOT/VERSION" ]; then
 else
   fail "VERSION: missing or empty"
 fi
+fi
 
 # ─── 8. Domain-Modeling Skill Integrity ────────────────────────
 
 echo ""
 echo "── Domain-Modeling Skill ──"
-
-DM_DIR="$ROOT/.claude/skills/domain-modeling"
 
 if [ -f "$DM_DIR/SKILL.md" ]; then
   dm_fm=$(sed -n '/^---$/,/^---$/p' "$DM_DIR/SKILL.md" | sed '1d;$d')
@@ -355,18 +373,23 @@ else
 fi
 
   # SKILL.md or planner prompt must reference domain-modeling
-  if grep -q 'domain-modeling' "$SKILL_FILE" || grep -rq 'domain-modeling' "$PROMPT_DIR"; then
-    pass "domain-modeling: referenced (in SKILL.md or prompt templates)"
+  if [ "$MODE" = "source" ]; then
+    if grep -q 'domain-modeling' "$SKILL_FILE" || grep -rq 'domain-modeling' "$PROMPTS_DIR"; then
+      pass "domain-modeling: referenced (in SKILL.md or prompt templates)"
+    else
+      fail "domain-modeling: missing reference"
+    fi
   else
-    fail "domain-modeling: missing reference"
+    # installed mode: domain-modeling SKILL.md itself counts
+    pass "domain-modeling: detected (installed layout)"
   fi
 
 # ─── 9. Prompt Template Integrity ──────────────────────────────
 
+# Only for source layout
+if [ "$MODE" = "source" ]; then
 echo ""
 echo "── Prompt Templates ──"
-
-PROMPTS_DIR="$ROOT/.claude/skills/feature-factory/prompts"
 
 if [ -d "$PROMPTS_DIR" ]; then
 
@@ -418,6 +441,7 @@ if [ -d "$PROMPTS_DIR" ]; then
 
 else
   fail "prompts/ directory missing"
+fi
 fi
 
 # ─── Summary ───────────────────────────────────────────────────

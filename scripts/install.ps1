@@ -37,15 +37,15 @@ if (-not (Test-Path $TargetPath -PathType Container)) {
 
 $TargetPath = Resolve-Path $TargetPath
 
-# ── Source directory ────────────────────────────────────────────
-$SrcPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+# ── Source directory (one level above script, which is project root) ─
+$SrcPath = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 # ── Read version ────────────────────────────────────────────────
 $Version = (Get-Content "$SrcPath\VERSION" -Raw).Trim()
 
 # ── Check for existing installation ─────────────────────────────
 if ($User) {
-  if ((Test-Path "$TargetPath\agents") -and (Test-Path "$TargetPath\skills\feature-factory")) {
+  if ((Test-Path "$TargetPath\agents") -and (Test-Path "$TargetPath\skills\domain-modeling")) {
     Write-Warning "Feature Factory may already be installed at the user level."
     $reply = Read-Host "  Overwrite? (y/N)"
     if ("y", "Y" -notcontains $reply) {
@@ -53,7 +53,7 @@ if ($User) {
       exit 0
     }
   }
-} elseif ((Test-Path "$TargetPath\.claude\agents") -and (Test-Path "$TargetPath\.claude\skills\feature-factory")) {
+} elseif ((Test-Path "$TargetPath\.claude\agents") -and (Test-Path "$TargetPath\.claude\skills\domain-modeling")) {
   Write-Warning "Feature Factory may already be installed in this project."
   $reply = Read-Host "  Overwrite? (y/N)"
   if ("y", "Y" -notcontains $reply) {
@@ -98,7 +98,7 @@ if ($User) {
   Write-Host "Installed files:"
 }
 Write-Host "  .claude\agents\          — 7 specialized agents"
-Write-Host "  .claude\skills\          — Feature Factory orchestrator + domain-modeling"
+Write-Host "  .claude\skills\          — domain-modeling skill (Planner integration)"
 Write-Host "  .claude\commands\        — /software-factory and /debug"
 Write-Host "  .claude\rules\           — Builder shared rules"
 Write-Host "  .claude\FAQ.md           — Troubleshooting guide"
@@ -135,9 +135,9 @@ Write-Host "brainstorming. Without it, Planner falls back to an inline"
 Write-Host "process that works but is less polished."
 Write-Host ""
 Write-Host "Install it for the full experience:"
-Write-Host "  claude plugins install anthropics/superpowers"
+Write-Host "  claude plugins install superpowers@superpowers-marketplace"
 Write-Host ""
 $answer = Read-Host "Install Superpowers now? [Y/n]"
 if ($answer -ne 'n' -and $answer -ne 'N') {
-  try { claude plugins install anthropics/superpowers } catch { Write-Host "  → Skipped (claude CLI not available in this environment)" }
+  try { claude plugins install superpowers@superpowers-marketplace } catch { Write-Host "  → Skipped (claude CLI not available in this environment)" }
 }

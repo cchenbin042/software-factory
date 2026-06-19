@@ -58,7 +58,29 @@ bash .claude/tests/smoke.sh
 
 ---
 
-## [1.4.0] — 2026-06-19
+## [1.5.0] — 2026-06-19
+
+### Added
+- **ModelScope / Skill 标准化**: 新增根目录 `SKILL.md` 作为 ModelScope 标准 Skill 入口（根目录仅此 1 个），YAML frontmatter 包含 license、tags、compatibility
+- **npx skills add 安装**: 新增安装方式 B —— 通过 `npx skills add` 直接安装
+- **references/ 目录**: 绑定资源重组到 `references/` 下（agents/、rules/、prompts/、commands/、domain-modeling/、docs/）
+- **scripts/ 目录**: 安装脚本和 smoke test 移至 `scripts/`
+- **assets/ 目录**: 预留给图标等静态资源
+
+### Changed
+- **编排 Skill 移至根目录**: `.claude/skills/feature-factory/SKILL.md` + `rules.md` → 根 `SKILL.md`（ModelScope 规范）
+- **Agent/Command/Rule 镜像**: `.claude/` 目录保留 `references/` 的拷贝副本，确保本仓库自身可用 `/software-factory`
+- **安装脚本路径**: `install.sh`/`install.ps1` 移至 `scripts/`，源路径从 script-dir 改为 project-root
+- **Smoke test 双模式**: 支持从 `scripts/`（源仓库）和 `.claude/tests/`（已安装）两种路径运行
+- **Skill 入口命令**: 文件路径从 `.claude/skills/feature-factory/SKILL.md` → 根 `SKILL.md`
+
+### Removed
+- **`.agents/skills/skill-creator/`**: 开发工具，非发布包的一部分
+- **`.claude/skills/feature-factory/`**: 已合并到根 `SKILL.md`
+- **根 `install.sh`/`install.ps1`**: 移至 `scripts/`
+
+### Deprecated
+- **`.claude/skills/feature-factory/SKILL.md`**: 旧编排 Skill 位置。将在 v2.0.0 中移除。迁移方式：使用根 `SKILL.md`。
 
 ### Added
 - **domain-modeling skill** (`/domain-modeling`): extract and define canonical domain terms, maintain CONTEXT.md glossary, create ADRs for hard-to-reverse decisions. Loaded by Planner during Phase 0.
