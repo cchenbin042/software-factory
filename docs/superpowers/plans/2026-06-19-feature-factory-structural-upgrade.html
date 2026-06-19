@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feature Factory v1.5.0–v1.5.2 结构升级 — 实施计划</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #a371f7;
+    --code-bg: #1c2128;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  h1 { font-size: 2em; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 8px; color: #f0f6fc; }
+  h2 { font-size: 1.4em; margin-top: 40px; margin-bottom: 12px; color: #f0f6fc; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { font-size: 1.15em; margin-top: 28px; margin-bottom: 8px; color: #f0f6fc; }
+  h4 { font-size: 1em; margin-top: 20px; margin-bottom: 6px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .meta { color: var(--text-muted); font-size: 0.9em; margin-bottom: 24px; }
+  .box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .box.warn { border-left: 3px solid var(--yellow); }
+  .box.info { border-left: 3px solid var(--accent); }
+  .box.goal { border-left: 3px solid var(--green); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th { background: var(--surface); color: #f0f6fc; font-weight: 600; }
+  td { vertical-align: top; }
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82em;
+    line-height: 1.5;
+    color: #c9d1d9;
+  }
+  pre .kw { color: #ff7b72; }
+  pre .str { color: #a5d6ff; }
+  pre .cmt { color: #8b949e; font-style: italic; }
+  pre .fn { color: #d2a8ff; }
+  pre .var { color: #ffa657; }
+  ul, ol { margin: 8px 0 8px 24px; }
+  li { margin: 4px 0; }
+  .task {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .task h4 { margin-top: 0; font-size: 1.05em; }
+  .task .files { font-size: 0.85em; color: var(--text-muted); margin: 6px 0 12px; }
+  .task .files strong { color: var(--text); }
+  .step {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 10px 0;
+  }
+  .step input[type="checkbox"] { margin-right: 8px; transform: scale(1.15); accent-color: var(--green); }
+  .step .desc { font-weight: 600; color: #f0f6fc; }
+  .step .cmd { color: var(--yellow); }
+  .step .expected { color: var(--green); }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .tag.p0 { background: rgba(248,81,73,0.15); color: var(--red); }
+  .tag.p1 { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .tag.p2 { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag.p3 { background: rgba(163,113,247,0.15); color: var(--purple); }
+  .tag.sprint1 { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag.sprint2 { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .tag.sprint3 { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .index { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 16px 0; }
+  .index-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .index-card .sprint { font-size: 0.8em; color: var(--text-muted); }
+  .index-card .title { font-weight: 700; color: #f0f6fc; margin: 4px 0; }
+  .index-card .tasks-count { font-size: 0.85em; color: var(--text-muted); }
+  .dep-graph {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    line-height: 1.8;
+    color: var(--text-muted);
+    margin: 16px 0;
+  }
+  .dep-graph .node { color: var(--accent); font-weight: 600; }
+  .dep-graph .arrow { color: var(--text-muted); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+</style>
+</head>
+<body>
+
+<h1>Feature Factory v1.5.0–v1.5.2 结构升级</h1>
+<p class="meta">
+  设计文档：<code>docs/superpowers/specs/2026-06-19-feature-factory-structural-upgrade-design.md</code><br>
+  计划日期：2026-06-19 · 总任务数：23 · 预计工时：6–8 小时
+</p>
+
+<div class="box goal">
+  <strong>目标：</strong>将 Feature Factory 从"优秀设计"提升为"生产级基础设施"——拆分 SKILL.md 巨型文件、解耦 Superpowers 依赖、建立 CI 质量门禁、完善文档体系。
+</div>
+
+<div class="box info">
+  <strong>架构方法：</strong>三个 Sprint 分层推进——结构层（S1）改骨架 → 质量层（S2）加保护 → 文档层（S3）完善体验。每层独立可交付，下一层建立在上一层之上。
+</div>
+
+<!-- ────────────────────────────────────────────── -->
+<h2>全局约束</h2>
+<div class="box">
+  <ul>
+    <li><strong>跨项目可移植（分发内容）</strong>：所有 <code>.claude/</code> 下的文件必须用相对路径链接，零 frontmatter 解析依赖，纯 Markdown 可读；复制到任何目标项目后可直接工作</li>
+    <li><strong>维护者工具不跟分发</strong>：<code>.github/</code> 目录只在源 repo 使用，不随 <code>.claude/</code> 复制</li>
+    <li><strong>不删文件</strong>：所有原始内容保留，只移动+精简；废弃内容用 <code># LEGACY</code> 标记</li>
+    <li><strong>不改变 Agent 职责</strong>：不改 Agent 数量、不改编排核心逻辑、不改 pipeline 拓扑</li>
+    <li><strong>Smoke test 是最终验证</strong>：每完成一个 Sprint，<code>bash .claude/tests/smoke.sh</code> 必须 0 warning 0 error</li>
+    <li><strong>Commit 粒度</strong>：每个 Task 一个 commit，Conventional Commits 格式，Co-Authored-By 尾部署名</li>
+  </ul>
+</div>
+
+<!-- ────────────────────────────────────────────── -->
+<h2>Sprint 概览</h2>
+<div class="index">
+  <div class="index-card">
+    <div class="sprint"><span class="tag sprint1">Sprint 1</span> v1.5.0</div>
+    <div class="title">结构层</div>
+    <div class="tasks-count">10 个 Task · ~3h</div>
+    拆分 SKILL.md + Superpowers 解耦
+  </div>
+  <div class="index-card">
+    <div class="sprint"><span class="tag sprint2">Sprint 2</span> v1.5.1</div>
+    <div class="title">质量层</div>
+    <div class="tasks-count">6 个 Task · ~1.5h</div>
+    CI + 依赖声明 + Deprecation 策略
+  </div>
+  <div class="index-card">
+    <div class="sprint"><span class="tag sprint3">Sprint 3</span> v1.5.2</div>
+    <div class="title">文档层</div>
+    <div class="tasks-count">7 个 Task · ~2.5h</div>
+    成本表 + FAQ 案例 + 录屏
+  </div>
+</div>
+
+<h3>任务依赖图</h3>
+<div class="dep-graph">
+  <span class="node">T1→T2</span> <span class="arrow">┐</span><br>
+  <span class="arrow">├─→</span> <span class="node">T3→T4→T5</span> <span class="arrow">──→</span> <span class="node">T8→T9→T10</span><br>
+  <span class="node">T6</span> <span class="arrow">┘</span> <span class="arrow">↘</span><br>
+  <span class="arrow">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘</span><br>
+  <span class="arrow">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="node">T11→T16</span> <span class="arrow">→</span> <span class="node">T17→T23</span><br>
+  <span class="arrow">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> Sprint 1 <span class="arrow">──────→</span> Sprint 2 <span class="arrow">───→</span> Sprint 3
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<h1>Sprint 1：结构层 <span class="tag sprint1">v1.5.0</span></h1>
+
+<div class="box goal">
+  <strong>交付物：</strong>SKILL.md 精简为 ~120 行索引文件 + 20 个独立 prompt 模板 + Planner 内联 brainstorming 流程 + install 脚本 Superpowers 引导
+</div>
+
+<!-- ─── TASK 1 ─── -->
+<div class="task">
+  <h4>Task 1：创建 prompt 模板目录结构 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong><code>.claude/skills/feature-factory/prompts/</code> 及全部子目录<br>
+    <strong>接口：</strong>无消费方 · 产出目录骨架供 Task 2–5 填充
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建目录树</span>
+    <pre>mkdir -p .claude/skills/feature-factory/prompts/{full-mode,debug-mode,incremental-mode,shared}</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：验证目录结构</span>
+    <pre>find .claude/skills/feature-factory/prompts -type d</pre>
+    <div class="expected">预期输出：4 个目录（full-mode, debug-mode, incremental-mode, shared）</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：在每个目录下创建 <code>.gitkeep</code> 占位文件（防止空目录无法追踪）</span>
+    <pre>for dir in full-mode debug-mode incremental-mode shared; do
+  touch .claude/skills/feature-factory/prompts/$dir/.gitkeep
+done</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add .claude/skills/feature-factory/prompts/
+git commit -m "chore: scaffold prompt template directory structure"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 2 ─── -->
+<div class="task">
+  <h4>Task 2：创建 Full Mode 的 6 个 prompt 模板 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong>6 个文件（full-mode/step-{1,2,4,4-frontend,5,6}-*.md）<br>
+    <strong>修改：</strong>无<br>
+    <strong>消费方：</strong>Task 8（SKILL.md 精简后引用这些文件）<br>
+    <strong>源内容：</strong>当前 <code>SKILL.md</code> 第 38–153 行（Full Mode 的 Agent 调用模板）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建 <code>prompts/full-mode/step-1-researcher.md</code></span>
+    <pre>cat &gt; .claude/skills/feature-factory/prompts/full-mode/step-1-researcher.md &lt;&lt; 'ENDOFFILE'
+# Full Mode — Step 1: Researcher Prompt
+
+Copy the content below into the `prompt` field of the Agent() call:
+
+---
+
+Agent(
+  subagent_type="researcher",
+  description="Research codebase for feature",
+  prompt="Research the codebase for the following feature request. Map relevant files, identify existing patterns, find similar features, flag risks, and list tests that will need updates.
+
+Feature: [USER'S FEATURE DESCRIPTION]"
+)
+ENDOFFILE</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：创建 <code>prompts/full-mode/step-2-planner.md</code></span>
+    <p style="color:var(--text-muted);">从当前 SKILL.md 第 56–73 行提取 Planner Agent() 调用模板（含 domain-modeling 指令）</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：创建 <code>prompts/full-mode/step-4-backend-builder.md</code></span>
+    <p style="color:var(--text-muted);">从当前 SKILL.md 第 109–128 行提取 Backend Builder Agent() 调用模板（含 TDD 指令）</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：创建 <code>prompts/full-mode/step-4-frontend-builder.md</code></span>
+    <p style="color:var(--text-muted);">从当前 SKILL.md 第 130–152 行提取 Frontend Builder Agent() 调用模板（含 TDD + a11y 指令）</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 5：创建 <code>prompts/full-mode/step-5-test-verifier.md</code></span>
+    <p style="color:var(--text-muted);">从当前 SKILL.md 第 163–182 行提取 Test Verifier Agent() 调用模板</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 6：创建 <code>prompts/full-mode/step-6-validator.md</code></span>
+    <p style="color:var(--text-muted);">从当前 SKILL.md 第 196–214 行提取 Validator Agent() 调用模板</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 7：验证 —— 每个文件非空、包含正确的 subagent_type</span>
+    <pre>grep -l 'subagent_type=' .claude/skills/feature-factory/prompts/full-mode/*.md | wc -l</pre>
+    <div class="expected">预期：<code>6</code></div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 8：Commit</span>
+    <pre>git add .claude/skills/feature-factory/prompts/full-mode/
+git commit -m "feat: extract Full Mode agent prompts into standalone templates"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 3 ─── -->
+<div class="task">
+  <h4>Task 3：创建 Debug Mode 的 5 个 prompt 模板 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong>5 个文件（debug-mode/step-{1,3-backend,3-frontend,4,5}-*.md）<br>
+    <strong>源内容：</strong>当前 <code>SKILL.md</code> 第 235–343 行（Debug Mode 全部 Agent 调用模板）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1–5：依次创建 step-1-debugger.md, step-3-backend-builder.md, step-3-frontend-builder.md, step-4-test-verifier.md, step-5-validator.md</span>
+    <p style="color:var(--text-muted);">每个文件格式同 Task 2：Markdown 标题 + Agent() 调用原文。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 6：验证</span>
+    <pre>grep -l 'subagent_type=' .claude/skills/feature-factory/prompts/debug-mode/*.md | wc -l</pre>
+    <div class="expected">预期：<code>5</code></div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 7：Commit</span>
+    <pre>git add .claude/skills/feature-factory/prompts/debug-mode/
+git commit -m "feat: extract Debug Mode agent prompts into standalone templates"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 4 ─── -->
+<div class="task">
+  <h4>Task 4：创建 Incremental Mode 的 5 个 prompt 模板 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong>5 个文件（incremental-mode/step-{1,2-backend,2-frontend,3,4}-*.md）<br>
+    <strong>源内容：</strong>当前 <code>SKILL.md</code> 第 349–538 行（Incremental Mode 全部 Agent 调用模板）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1–5：依次创建 step-1-researcher.md, step-2-backend-builder.md, step-2-frontend-builder.md, step-3-test-verifier.md, step-4-validator.md</span>
+    <p style="color:var(--text-muted);">注意：Incremental 的 prompt 包含完整的自包含模板（不能像旧版那样 "Same as Full Mode Step N"），确保每个文件是独立可用的。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 6：验证</span>
+    <pre>grep -l 'subagent_type=' .claude/skills/feature-factory/prompts/incremental-mode/*.md | wc -l</pre>
+    <div class="expected">预期：<code>5</code></div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 7：Commit</span>
+    <pre>git add .claude/skills/feature-factory/prompts/incremental-mode/
+git commit -m "feat: extract Incremental Mode agent prompts into standalone templates"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 5 ─── -->
+<div class="task">
+  <h4>Task 5：创建 Shared 重试/恢复 prompt 模板 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong>4 个文件（shared/planner-revision.md, builder-test-fix.md, validator-critical-fix.md, debugger-reanalysis.md）<br>
+    <strong>源内容：</strong>当前 <code>SKILL.md</code> 第 86–99、第 257–269 行；当前 <code>.claude/rules/failure-recovery.md</code> 第 79–96、第 105–119、第 135–149 行
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建 <code>shared/planner-revision.md</code> — 蓝图驳回重试模板</span>
+    <p style="color:var(--text-muted);">从 SKILL.md 第 86–99 行和 failure-recovery.md 第 79–96 行提取</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：创建 <code>shared/builder-test-fix.md</code> — 测试失败修复模板</span>
+    <p style="color:var(--text-muted);">从 failure-recovery.md 第 105–119 行提取</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：创建 <code>shared/validator-critical-fix.md</code> — Critical 修复模板</span>
+    <p style="color:var(--text-muted);">从 failure-recovery.md 第 135–149 行提取</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：创建 <code>shared/debugger-reanalysis.md</code> — 诊断驳回重分析模板</span>
+    <p style="color:var(--text-muted);">从 SKILL.md 第 257–269 行提取</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 5：验证</span>
+    <pre>grep -l 'subagent_type=' .claude/skills/feature-factory/prompts/shared/*.md | wc -l</pre>
+    <div class="expected">预期：<code>4</code></div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 6：Commit</span>
+    <pre>git add .claude/skills/feature-factory/prompts/shared/
+git commit -m "feat: extract shared retry/recovery prompt templates"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 6 ─── -->
+<div class="task">
+  <h4>Task 6：创建 rules.md（编排者 8 条规则） <span class="tag p1">P1</span></h4>
+  <div class="files">
+    <strong>创建：</strong><code>.claude/skills/feature-factory/rules.md</code><br>
+    <strong>源内容：</strong>当前 <code>SKILL.md</code> 第 553–564 行（"Rules for the Orchestrator" 章节）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建 rules.md</span>
+    <pre>cat &gt; .claude/skills/feature-factory/rules.md &lt;&lt; 'ENDOFFILE'
+# Rules for the Orchestrator
+
+These rules apply to the feature-factory skill when orchestrating any pipeline.
+They are extracted from SKILL.md to keep the orchestrator logic focused.
+
+1. **Never skip a human checkpoint.** The blueprint and the final PR must be approved by the user.
+2. **Never modify code yourself.** You coordinate agents — you don't write or edit files.
+3. **Pass complete context.** Each agent gets the full output of the agents before it. Summarizing loses critical detail.
+4. **Surface uncertainty immediately.** If an agent's output is unclear or contradictory, flag it to the user rather than guessing.
+5. **Track the chain.** After each step, report what was done and what comes next. The user should always know where they are in the pipeline.
+6. **Handle failures gracefully.** If an agent seems to hang or produce bad output, tell the user and ask whether to retry or adjust.
+7. **Retry with context on agent failure.** If an agent produces incomplete, malformed, or clearly wrong output, do NOT silently proceed. Feed the agent's output + the specific problem back to a NEW instance of the same agent type. If the retry also fails, surface the problem to the user. Do not retry a third time without human guidance.
+8. **Never proceed past a broken step.** If an intermediate agent fails (Researcher produces nonsense, Planner contradicts CLAUDE.md, Builder introduces regressions), stop. A downstream agent cannot fix an upstream mistake — it can only amplify it.
+ENDOFFILE</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：Commit</span>
+    <pre>git add .claude/skills/feature-factory/rules.md
+git commit -m "refactor: extract orchestrator rules into standalone file"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 7 ─── -->
+<div class="task">
+  <h4>Task 7：Superpowers 解耦 — 重写 planner.md Phase 0 <span class="tag p1">P1</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/agents/planner.md:21–48</code>（Phase 0 和 Phase 0b 章节）<br>
+    <strong>消费方：</strong>Task 8（SKILL.md 精简后引用 Planner 时不再依赖外部 Superpowers）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：读取当前 planner.md 确认编辑基线</span>
+    <pre>sed -n '21,48p' .claude/agents/planner.md</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：替换 Phase 0 — 将第 21–37 行替换为条件分支 + 内联流程</span>
+    <pre><!-- 编辑 planner.md，将 Phase 0 替换为设计文档 Sprint 1 §1.2 中的完整内容 --></pre>
+    <p style="color:var(--text-muted);">关键要素：(a) Superpowers 可用时调用 Skill(skill="brainstorming")；(b) 不可用时执行 4 步内联流程（Explore → Ask → Propose → Present）；(c) Hard gate 保持不变</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：确认 Phase 0b (Domain Modeling) 保持不变</span>
+    <pre>grep -A5 'Phase 0b' .claude/agents/planner.md</pre>
+    <div class="expected">应该仍然存在且未修改</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：运行 smoke.sh 确认 planner frontmatter 仍然有效</span>
+    <pre>bash .claude/tests/smoke.sh</pre>
+    <div class="expected">planner 相关检查全部 PASS</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 5：Commit</span>
+    <pre>git add .claude/agents/planner.md
+git commit -m "feat(planner): add inline brainstorming fallback when Superpowers is unavailable"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 8 ─── -->
+<div class="task">
+  <h4>Task 8：精简 SKILL.md 为索引文件 <span class="tag p1">P1</span> ⚠️ 关键任务</h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/skills/feature-factory/SKILL.md</code>（~580 行 → ~120 行）<br>
+    <strong>消费方：</strong>编排者运行时读取——必须保持所有 <code>Agent()</code> 调用语义不变，只是内容引用方式从"内联"变为"链接"
+  </div>
+
+  <div class="box warn">
+    <strong>⚠️ 这是整个 Sprint 1 最关键的一步。</strong> SKILL.md 是流水线的单一入口点。精简后必须保证：所有 prompt 内容通过链接可达、smoke.sh 的 subagent_type 引用检查通过、编排者阅读体验不打折。
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：备份当前 SKILL.md</span>
+    <pre>cp .claude/skills/feature-factory/SKILL.md .claude/skills/feature-factory/SKILL.md.bak</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：写入新的精简 SKILL.md</span>
+    <p style="color:var(--text-muted);">保留：frontmatter + Architecture ASCII 图 + Three Modes 表 + 三种模式的步骤摘要（每步一行 + 链接）+ 编排者规则引用 + Git/Recovery 外部规则引用</p>
+    <p style="color:var(--text-muted);">删除：所有 Agent() 调用中的 prompt="..." 内联内容（已迁至 Task 2–5 的 prompt 文件）</p>
+    <p style="color:var(--text-muted);">新 SKILL.md 精确内容见设计文档 Sprint 1 §1.1</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：验证 —— 所有链接指向真实文件</span>
+    <pre># 提取 SKILL.md 中所有相对链接的目标，逐一检查文件存在
+grep -oP '\[.*?\]\(\.\..*?\.md\)' .claude/skills/feature-factory/SKILL.md | \
+  sed 's/.*(//;s/)//' | while read link; do
+    target=$(echo "$link" | sed 's|../../|.claude/|')
+    if [ -f "$target" ]; then echo "OK: $link"; else echo "MISSING: $link"; fi
+  done</pre>
+    <div class="expected">所有链接输出 <code>OK</code></div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：验证 —— 所有 subagent_type 引用仍然有效</span>
+    <pre>grep -o 'subagent_type="[^"]*"' .claude/skills/feature-factory/prompts/**/*.md | sed 's/.*"//;s/"//' | sort -u</pre>
+    <div class="expected">列出 7 个 Agent 名称，每个 Agent 文件都存在</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 5：运行 smoke.sh</span>
+    <pre>bash .claude/tests/smoke.sh</pre>
+    <div class="expected">PASS: 所有检查 · WARN: 0 · FAIL: 0</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 6：删除备份文件</span>
+    <pre>rm .claude/skills/feature-factory/SKILL.md.bak</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 7：Commit</span>
+    <pre>git add .claude/skills/feature-factory/SKILL.md
+git commit -m "refactor: slim SKILL.md to ~120-line index; prompts live in standalone files"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 9 ─── -->
+<div class="task">
+  <h4>Task 9：更新 install 脚本 — 加 Superpowers 引导 <span class="tag p1">P1</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>install.sh</code>（末尾追加）、<code>install.ps1</code>（末尾追加）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：编辑 install.sh — 在文件末尾追加 Superpowers 引导块</span>
+    <pre>cat &gt;&gt; install.sh &lt;&lt; 'ENDOFFILE'
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Recommended: Superpowers Plugin"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Feature Factory's Planner uses Superpowers for interactive"
+echo "brainstorming. Without it, Planner falls back to an inline"
+echo "process that works but is less polished."
+echo ""
+echo "Install it for the full experience:"
+echo "  claude plugins install anthropics/superpowers"
+echo ""
+read -p "Install Superpowers now? [Y/n] " answer
+if [ "$answer" != "n" ] && [ "$answer" != "N" ]; then
+  claude plugins install anthropics/superpowers 2&gt;/dev/null || \
+    echo "  → Skipped (claude CLI not available in this environment)"
+fi
+ENDOFFILE</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：编辑 install.ps1 — 追加 PowerShell 等效引导</span>
+    <pre># 追加到 install.ps1 末尾：
+# Write-Host "Recommended: Superpowers Plugin" ...
+# $answer = Read-Host "Install Superpowers now? [Y/n]"
+# if ($answer -ne 'n') { claude plugins install anthropics/superpowers }</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：Commit</span>
+    <pre>git add install.sh install.ps1
+git commit -m "feat(install): add Superpowers plugin installation prompt"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 10 ─── -->
+<div class="task">
+  <h4>Task 10：更新 smoke.sh — 加 prompt 文件完整性检查 <span class="tag p1">P1</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/tests/smoke.sh</code>（在 Domain-Modeling 检查之后、Summary 之前插入新检查类别）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：在 smoke.sh 中插入「Prompt Templates」检查类别</span>
+    <pre># ─── 9. Prompt Template Integrity ──────────────────────────────
+
+echo ""
+echo "── Prompt Templates ──"
+
+PROMPTS_DIR="$ROOT/.claude/skills/feature-factory/prompts"
+
+# Full Mode: 6 files expected
+FULL_EXPECTED=6
+FULL_COUNT=$(ls "$PROMPTS_DIR/full-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l)
+if [ "$FULL_COUNT" -eq "$FULL_EXPECTED" ]; then
+  pass "prompts/full-mode/: $FULL_COUNT/$FULL_EXPECTED prompt files"
+else
+  fail "prompts/full-mode/: $FULL_COUNT/$FULL_EXPECTED prompt files (expected $FULL_EXPECTED)"
+fi
+
+# Debug Mode: 5 files expected
+DEBUG_EXPECTED=5
+DEBUG_COUNT=$(ls "$PROMPTS_DIR/debug-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l)
+if [ "$DEBUG_COUNT" -eq "$DEBUG_EXPECTED" ]; then
+  pass "prompts/debug-mode/: $DEBUG_COUNT/$DEBUG_EXPECTED prompt files"
+else
+  fail "prompts/debug-mode/: $DEBUG_COUNT/$DEBUG_EXPECTED prompt files (expected $DEBUG_EXPECTED)"
+fi
+
+# Incremental Mode: 5 files expected
+INCR_EXPECTED=5
+INCR_COUNT=$(ls "$PROMPTS_DIR/incremental-mode/"*.md 2>/dev/null | grep -v .gitkeep | wc -l)
+if [ "$INCR_COUNT" -eq "$INCR_EXPECTED" ]; then
+  pass "prompts/incremental-mode/: $INCR_COUNT/$INCR_EXPECTED prompt files"
+else
+  fail "prompts/incremental-mode/: $INCR_COUNT/$INCR_EXPECTED prompt files (expected $INCR_EXPECTED)"
+fi
+
+# Shared: 4 files expected
+SHARED_EXPECTED=4
+SHARED_COUNT=$(ls "$PROMPTS_DIR/shared/"*.md 2>/dev/null | grep -v .gitkeep | wc -l)
+if [ "$SHARED_COUNT" -eq "$SHARED_EXPECTED" ]; then
+  pass "prompts/shared/: $SHARED_COUNT/$SHARED_EXPECTED prompt files"
+else
+  fail "prompts/shared/: $SHARED_COUNT/$SHARED_EXPECTED prompt files (expected $SHARED_EXPECTED)"
+fi
+
+# Every prompt file must contain a subagent_type or be a shared template
+for f in "$PROMPTS_DIR"/full-mode/*.md "$PROMPTS_DIR"/debug-mode/*.md "$PROMPTS_DIR"/incremental-mode/*.md; do
+  [ "$(basename "$f")" = ".gitkeep" ] && continue
+  if grep -q 'subagent_type=' "$f"; then
+    pass "  $(basename "$f"): contains subagent_type"
+  else
+    fail "  $(basename "$f"): missing subagent_type reference"
+  fi
+done</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：运行 smoke.sh 验证新检查</span>
+    <pre>bash .claude/tests/smoke.sh</pre>
+    <div class="expected">「Prompt Templates」类别出现，所有检查 PASS</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：Commit</span>
+    <pre>git add .claude/tests/smoke.sh
+git commit -m "test: add prompt template integrity checks to smoke test"</pre>
+  </div>
+</div>
+
+<div class="box info">
+  <strong>Sprint 1 完成检查点：</strong>
+  <ul>
+    <li><code>bash .claude/tests/smoke.sh</code> → 0 FAIL, 0 WARN</li>
+    <li><code>git log --oneline -10</code> → 每个 Task 一个 commit</li>
+    <li>新 SKILL.md 行数 &lt; 150 行</li>
+    <li><code>find .claude/skills/feature-factory/prompts -name '*.md' | wc -l</code> → 20</li>
+    <li>Planner 在无 Superpowers 环境下能执行内联 brainstorming</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<h1>Sprint 2：质量层 <span class="tag sprint2">v1.5.1</span></h1>
+
+<div class="box goal">
+  <strong>交付物：</strong>GitHub Actions CI workflow + smoke.sh 依赖声明和 <code>--ci</code> flag + CHANGELOG Deprecation 策略章节
+</div>
+
+<!-- ─── TASK 11 ─── -->
+<div class="task">
+  <h4>Task 11：创建 GitHub Actions CI workflow <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>创建：</strong><code>.github/workflows/smoke.yml</code><br>
+    <strong>分类：</strong>维护者工具——不随 <code>.claude/</code> 分发
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建 .github/workflows 目录</span>
+    <pre>mkdir -p .github/workflows</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：写入 smoke.yml</span>
+    <pre>cat &gt; .github/workflows/smoke.yml &lt;&lt; 'ENDOFFILE'
+name: Pipeline Smoke Test
+
+on:
+  push:
+    paths:
+      - '.claude/agents/**'
+      - '.claude/commands/**'
+      - '.claude/context/**'
+      - '.claude/rules/**'
+      - '.claude/skills/**'
+      - '.claude/tests/**'
+  pull_request:
+    paths:
+      - '.claude/agents/**'
+      - '.claude/commands/**'
+      - '.claude/context/**'
+      - '.claude/rules/**'
+      - '.claude/skills/**'
+      - '.claude/tests/**'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure smoke test is executable
+        run: test -x .claude/tests/smoke.sh || chmod +x .claude/tests/smoke.sh
+
+      - name: Run pipeline smoke test
+        run: bash .claude/tests/smoke.sh --ci
+ENDOFFILE</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：本地验证 YAML 语法</span>
+    <pre>python3 -c "import yaml; yaml.safe_load(open('.github/workflows/smoke.yml'))" 2&gt;/dev/null || \
+  echo "WARNING: PyYAML not available, skip syntax check — GitHub will validate on push"</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add .github/workflows/smoke.yml
+git commit -m "ci: add GitHub Actions smoke test workflow"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 12 ─── -->
+<div class="task">
+  <h4>Task 12：smoke.sh 加依赖声明 <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/tests/smoke.sh</code>（在 <code>set -euo pipefail</code> 之后、<code>PASS=0</code> 之前插入）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：定位插入点</span>
+    <pre>grep -n 'set -euo pipefail' .claude/tests/smoke.sh
+grep -n 'PASS=0' .claude/tests/smoke.sh</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：在两者之间插入依赖检查块（完整代码见设计文档 Sprint 2 §2.2）</span>
+    <pre><!-- 插入内容：
+1. REQUIRED_CMDS 数组遍历 + command -v 检查
+2. BASH_VERSINFO 版本检查 (>= 4.0)
+3. GNU sed/grep 检测（macOS 兼容性 WARNING）
+--></pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：验证——在 macOS 上故意用 BSD sed 测试（如果环境允许）</span>
+    <pre>bash .claude/tests/smoke.sh</pre>
+    <div class="expected">如果 GNU 工具缺失，输出 WARNING；脚本继续执行不崩溃</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add .claude/tests/smoke.sh
+git commit -m "test: add dependency declarations to smoke.sh (bash >= 4.0, GNU sed/grep)"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 13 ─── -->
+<div class="task">
+  <h4>Task 13：smoke.sh 加 --ci flag <span class="tag p0">P0</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/tests/smoke.sh</code>（2 处：变量声明 + verdict 逻辑）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：在依赖声明之后、第一个检查类别之前添加 CI_MODE 变量</span>
+    <pre># ─── CI Mode ─────────────────────────────────────────────────────
+CI_MODE=false
+if [ "${1:-}" = "--ci" ]; then
+  CI_MODE=true
+fi</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：修改末尾 verdict 逻辑——CI 模式下 exit 1 变为 exit 0</span>
+    <pre># 将：
+# elif [ "$WARN" -gt 0 ]; then ... exit 1
+# 改为：
+# elif [ "$WARN" -gt 0 ] && [ "$CI_MODE" = false ]; then ... exit 1</pre>
+    <p style="color:var(--text-muted);">同时 CI 模式 + 有 warning 时输出 "CLEAN (N warning(s) suppressed in CI mode)"</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：测试 --ci flag</span>
+    <pre>bash .claude/tests/smoke.sh --ci; echo "Exit: $?"</pre>
+    <div class="expected">如果有 warning，exit 0（不是 1）</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add .claude/tests/smoke.sh
+git commit -m "test: add --ci flag to suppress warnings in CI environments"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 14 ─── -->
+<div class="task">
+  <h4>Task 14：更新 smoke.sh Prompt 检查以适配 Sprint 1 新结构 <span class="tag p1">P1</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/tests/smoke.sh</code>
+  </div>
+  <div class="box warn">
+    如果 Sprint 1 的 smoke.sh 改动（Task 10）已经包含了 prompt 模板检查，且这些检查在 Sprint 2 中仍然有效，此 Task 可跳过。此处仅用于应对 SKILL.md 拆分后可能需要的检查调整。
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：确认 Task 10 的 prompt 检查在 Sprint 2 上下文仍有效</span>
+    <pre>bash .claude/tests/smoke.sh --ci</pre>
+    <div class="expected">「Prompt Templates」类别所有检查 PASS</div>
+  </div>
+</div>
+
+<!-- ─── TASK 15 ─── -->
+<div class="task">
+  <h4>Task 15：更新 .gitignore — 排除 CI 无关文件 <span class="tag p2">P2</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.gitignore</code>
+  </div>
+  <div class="box info">
+    此次新增的文件应该全部被 git 追踪（prompt 模板、CI workflow、文档）。确认 .gitignore 没有意外排除它们。尤其检查 <code>*evaluation*</code> 通配规则不会影响新文件。
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：检查 .gitignore 是否影响新文件</span>
+    <pre>git check-ignore .claude/skills/feature-factory/prompts/full-mode/step-1-researcher.md \
+  .github/workflows/smoke.yml \
+  docs/demo-script.md</pre>
+    <div class="expected">无输出（三个文件都不被 ignore）</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：如果需要，Commit</span>
+    <pre># 仅当有修改时
+git add .gitignore
+git commit -m "chore: verify .gitignore does not exclude new prompt/CI/doc files"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 16 ─── -->
+<div class="task">
+  <h4>Task 16：CHANGELOG 加 Deprecation 策略 <span class="tag p2">P2</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>CHANGELOG.md</code>（在版本策略下方插入新章节）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：定位插入点</span>
+    <pre>grep -n 'Semantic Versioning' CHANGELOG.md</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：在版本策略的 3 条 MAJOR/MINOR/PATCH 定义之后插入完整的 Deprecation 策略章节</span>
+    <p style="color:var(--text-muted);">完整内容见设计文档 Sprint 2 §2.3。包含：6 个组件的策略表、版本号触发规则表、废弃通知模板、用户兼容性检查指南。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：验证 Markdown 渲染</span>
+    <pre>head -80 CHANGELOG.md</pre>
+    <div class="expected">Deprecation 策略章节在版本策略和 [1.4.0] 条目之间，表格对齐正确</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add CHANGELOG.md
+git commit -m "docs: add deprecation policy and version compatibility guarantees"</pre>
+  </div>
+</div>
+
+<div class="box info">
+  <strong>Sprint 2 完成检查点：</strong>
+  <ul>
+    <li><code>bash .claude/tests/smoke.sh --ci</code> → exit 0（CI 模式下 warning 不阻塞）</li>
+    <li><code>bash .claude/tests/smoke.sh</code>（人工模式）→ 有 warning 时 exit 1</li>
+    <li>push 到 GitHub 后 Actions tab 能看到 smoke.yml 运行结果</li>
+    <li>CHANGELOG 包含完整的 Deprecation 策略章节</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<h1>Sprint 3：文档层 <span class="tag sprint3">v1.5.2</span></h1>
+
+<div class="box goal">
+  <strong>交付物：</strong>Token 成本参考表 + 3 个 FAQ 真实案例 + 演示录屏脚本 + README 链接
+</div>
+
+<!-- ─── TASK 17 ─── -->
+<div class="task">
+  <h4>Task 17：README 加 Token 成本参考表 <span class="tag p2">P2</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>README.md</code>（在"前置依赖"之后、"端到端示例"之前插入）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：定位插入点</span>
+    <pre>grep -n '前置依赖' README.md
+grep -n '端到端示例' README.md</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：插入 Token 成本参考表（完整内容见设计文档 Sprint 3 §3.1）</span>
+    <p style="color:var(--text-muted);">包含：3 种模式的 token 输入/输出估算表、影响因素表、省钱技巧</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：验证 —— 表格在 GitHub 上渲染正确</span>
+    <pre># 本地用 grip 或直接检查 Markdown 语法
+grep -c '^|' README.md</pre>
+    <div class="expected">表格行列对齐，无断裂的 pipe</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add README.md
+git commit -m "docs: add token cost reference table for all three modes"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 18 ─── -->
+<div class="task">
+  <h4>Task 18：FAQ 加真实案例 — Q1（Agent 输出不符合预期） <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/FAQ.md</code>（Q1 末尾追加「真实案例」子节）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：定位 Q1 末尾</span>
+    <pre>grep -n '### Q1:' .claude/FAQ.md
+grep -n '### Q2:' .claude/FAQ.md</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：在 Q1 的最后一行和 Q2 的第一行之间插入案例</span>
+    <p style="color:var(--text-muted);">案例内容见设计文档 Sprint 3 §3.2。格式：场景 → 排查过程 → 修复 → 教训。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：Commit</span>
+    <pre>git add .claude/FAQ.md
+git commit -m "docs: add real-world troubleshooting case to FAQ Q1"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 19 ─── -->
+<div class="task">
+  <h4>Task 19：FAQ 加真实案例 — Q6（Incremental vs Full 边界） <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/FAQ.md</code>（Q6 末尾追加）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：在 Q6 末尾插入「真实案例」</span>
+    <p style="color:var(--text-muted);">案例：用户以为"改字符串"是 Incremental，Quick Researcher 发现 12 个文件跨 3 模块 → 升级到 Full</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：Commit</span>
+    <pre>git add .claude/FAQ.md
+git commit -m "docs: add real-world mode selection case to FAQ Q6"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 20 ─── -->
+<div class="task">
+  <h4>Task 20：FAQ 加真实案例 — Q8（跨项目复制后不工作） <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>.claude/FAQ.md</code>（Q8 末尾追加）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：在 Q8 末尾插入「真实案例」</span>
+    <p style="color:var(--text-muted);">案例：Go 项目未修改 builder-rules.md 的 paths 和 CLAUDE.md 的命令 → 安装后三步修复法</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：Commit</span>
+    <pre>git add .claude/FAQ.md
+git commit -m "docs: add cross-project installation troubleshooting case to FAQ Q8"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 21 ─── -->
+<div class="task">
+  <h4>Task 21：创建录屏脚本 <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>创建：</strong><code>docs/demo-script.md</code>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：创建 docs/ 目录（如果不存在）</span>
+    <pre>mkdir -p docs</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：写入 demo-script.md</span>
+    <p style="color:var(--text-muted);">完整 3 分钟脚本：14 个时间戳 × 画面描述 × 旁白。内容见设计文档 Sprint 3 §3.3。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：Commit</span>
+    <pre>git add docs/demo-script.md
+git commit -m "docs: add 3-minute demo recording script"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 22 ─── -->
+<div class="task">
+  <h4>Task 22：录制并上传演示视频、更新 README 链接 <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>修改：</strong><code>README.md</code>（"快速开始"章节顶部加视频链接行）
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：按 demo-script.md 录制终端操作</span>
+    <p style="color:var(--text-muted);">工具：OBS Studio（免费跨平台）。截取终端窗口，1920×1080。不做过度后期制作——保持真实速度。</p>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：上传到 YouTube（不公开列出），获取分享链接</span>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：在 README.md 的"快速开始"标题下方加一行</span>
+    <pre>🎬 **3 分钟演示**：[观看 Feature Factory 完整流水线](https://youtu.be/XXXXX)</pre>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：Commit</span>
+    <pre>git add README.md
+git commit -m "docs: add demo video link to README"</pre>
+  </div>
+</div>
+
+<!-- ─── TASK 23 ─── -->
+<div class="task">
+  <h4>Task 23：最终验证 — Sprint 3 完成后的全量 smoke test <span class="tag p3">P3</span></h4>
+  <div class="files">
+    <strong>无修改</strong>——仅验证
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 1：运行完整 smoke test</span>
+    <pre>bash .claude/tests/smoke.sh</pre>
+    <div class="expected">PASS: 全部 · WARN: 0 · FAIL: 0 · Verdict: CLEAN</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 2：检查完整 commit 历史</span>
+    <pre>git log --oneline master..HEAD</pre>
+    <div class="expected">23 个 commit（或接近），每个 Conventional Commits 格式，Co-Authored-By 尾部署名</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 3：检查无未追踪文件</span>
+    <pre>git status --porcelain</pre>
+    <div class="expected">空输出（clean working tree）</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 4：确认新 SKILL.md 结构完整性</span>
+    <pre>echo "=== SKILL.md lines ===" &amp;&amp; wc -l .claude/skills/feature-factory/SKILL.md
+echo "=== Prompt templates ===" &amp;&amp; find .claude/skills/feature-factory/prompts -name '*.md' ! -name '.gitkeep' | wc -l
+echo "=== CI workflow ===" &amp;&amp; test -f .github/workflows/smoke.yml &amp;&amp; echo "EXISTS"
+echo "=== Deprecation policy ===" &amp;&amp; grep -c 'Deprecation 策略' CHANGELOG.md
+echo "=== Cost table ===" &amp;&amp; grep -c 'Token' README.md
+echo "=== FAQ cases ===" &amp;&amp; grep -c '真实案例' .claude/FAQ.md
+echo "=== Demo script ===" &amp;&amp; test -f docs/demo-script.md &amp;&amp; echo "EXISTS"</pre>
+    <div class="expected">每项都输出预期值</div>
+  </div>
+
+  <div class="step">
+    <input type="checkbox">
+    <span class="desc">Step 5：最终 commit（如有任何遗漏的变更）</span>
+    <pre>git add -A
+git diff --cached --stat
+# 如果有遗漏：git commit -m "chore: final cleanup for v1.5.2"
+# 如果没有：git reset HEAD -- .  # 取消暂存</pre>
+  </div>
+</div>
+
+<div class="box info">
+  <strong>Sprint 3 完成检查点：</strong>
+  <ul>
+    <li>README 有 Token 成本参考表（人类可读、数量级准确）</li>
+    <li>FAQ 有 3 个真实案例（场景→排查→修复→教训）</li>
+    <li><code>docs/demo-script.md</code> 存在且完整</li>
+    <li>YouTube 链接在 README 中有效（如果完成了录制）</li>
+    <li>全量 smoke test → CLEAN</li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>附录 A：文件变更总览</h2>
+
+<table>
+  <thead>
+    <tr><th>文件</th><th>Sprint</th><th>Task</th><th>操作</th><th>类别</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>.claude/skills/feature-factory/prompts/</code> 目录树</td><td>S1</td><td>T1</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>prompts/full-mode/step-*-*.md</code> (6)</td><td>S1</td><td>T2</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>prompts/debug-mode/step-*-*.md</code> (5)</td><td>S1</td><td>T3</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>prompts/incremental-mode/step-*-*.md</code> (5)</td><td>S1</td><td>T4</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>prompts/shared/*.md</code> (4)</td><td>S1</td><td>T5</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>.claude/skills/feature-factory/rules.md</code></td><td>S1</td><td>T6</td><td>创建</td><td>分发</td></tr>
+    <tr><td><code>.claude/agents/planner.md</code></td><td>S1</td><td>T7</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>.claude/skills/feature-factory/SKILL.md</code></td><td>S1</td><td>T8</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>install.sh</code></td><td>S1</td><td>T9</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>install.ps1</code></td><td>S1</td><td>T9</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>.claude/tests/smoke.sh</code></td><td>S1+S2</td><td>T10,T12,T13,T14</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>.github/workflows/smoke.yml</code></td><td>S2</td><td>T11</td><td>创建</td><td>维护者</td></tr>
+    <tr><td><code>.gitignore</code></td><td>S2</td><td>T15</td><td>可能修改</td><td>两者</td></tr>
+    <tr><td><code>CHANGELOG.md</code></td><td>S2</td><td>T16</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>README.md</code></td><td>S3</td><td>T17,T22</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>.claude/FAQ.md</code></td><td>S3</td><td>T18,T19,T20</td><td>修改</td><td>分发</td></tr>
+    <tr><td><code>docs/demo-script.md</code></td><td>S3</td><td>T21</td><td>创建</td><td>分发</td></tr>
+  </tbody>
+</table>
+
+<h2>附录 B：预期 Commit 序列</h2>
+
+<pre style="font-size:0.78em;">
+<span style="color:var(--text-muted)"># Sprint 1</span>
+chore: scaffold prompt template directory structure
+feat: extract Full Mode agent prompts into standalone templates
+feat: extract Debug Mode agent prompts into standalone templates
+feat: extract Incremental Mode agent prompts into standalone templates
+feat: extract shared retry/recovery prompt templates
+refactor: extract orchestrator rules into standalone file
+feat(planner): add inline brainstorming fallback when Superpowers is unavailable
+refactor: slim SKILL.md to ~120-line index; prompts live in standalone files
+feat(install): add Superpowers plugin installation prompt
+test: add prompt template integrity checks to smoke test
+
+<span style="color:var(--text-muted)"># Sprint 2</span>
+ci: add GitHub Actions smoke test workflow
+test: add dependency declarations to smoke.sh (bash >= 4.0, GNU sed/grep)
+test: add --ci flag to suppress warnings in CI environments
+chore: verify .gitignore does not exclude new prompt/CI/doc files
+docs: add deprecation policy and version compatibility guarantees
+
+<span style="color:var(--text-muted)"># Sprint 3</span>
+docs: add token cost reference table for all three modes
+docs: add real-world troubleshooting case to FAQ Q1
+docs: add real-world mode selection case to FAQ Q6
+docs: add cross-project installation troubleshooting case to FAQ Q8
+docs: add 3-minute demo recording script
+docs: add demo video link to README
+chore: final cleanup for v1.5.2
+</pre>
+
+<h2>附录 C：验证命令速查</h2>
+
+<table>
+  <thead><tr><th>场景</th><th>命令</th></tr></thead>
+  <tbody>
+    <tr><td>人工 smoke test</td><td><code>bash .claude/tests/smoke.sh</code></td></tr>
+    <tr><td>CI smoke test</td><td><code>bash .claude/tests/smoke.sh --ci</code></td></tr>
+    <tr><td>Prompt 模板数量</td><td><code>find .claude/skills/feature-factory/prompts -name '*.md' ! -name '.gitkeep' | wc -l</code></td></tr>
+    <tr><td>SKILL.md 行数</td><td><code>wc -l .claude/skills/feature-factory/SKILL.md</code></td></tr>
+    <tr><td>链接完整性</td><td><code>grep -oP '\[.*?\]\(\.\..*?\.md\)' .claude/skills/feature-factory/SKILL.md</code></td></tr>
+    <tr><td>Clean working tree</td><td><code>git status --porcelain</code></td></tr>
+    <tr><td>Commit 历史</td><td><code>git log --oneline master..HEAD</code></td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>
