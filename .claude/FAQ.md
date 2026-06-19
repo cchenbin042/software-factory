@@ -103,6 +103,23 @@ maxTurns: 15  # 调整为更大或更小的值
 
 **模糊地带**：当你无法判断时，从 Incremental 开始。Incremental 的 Step 1（Quick Researcher Scan）会告诉你是否该升级到 Full——如果 Researcher 发现 8+ 文件受影响或跨模块依赖，编排者会自动建议升级。
 
+### 真实案例
+
+**场景**：用户想把所有 API 错误消息从英文改成中文，直觉是"Incremental——
+只是改字符串而已"。
+
+**Quick Researcher 发现**：
+- 错误消息分散在 12 个 service 文件中
+- 部分消息是前端 hardcode 的（不在后端）
+- 有一个 shared error codes 常量文件被前后端共同引用
+- 涉及 3 个模块、前后端两层
+
+**编排者判断**：8+ 文件 + 跨模块 + 共享文件冲突风险 → 建议升级到 Full。
+用户接受升级，Planner 产出了一份完整的迁移方案。
+
+**教训**："只改字符串"从描述看是 Incremental，但从代码分布看可能是
+Full。信任 Quick Researcher 的扫描结果——它比你更快地看到真实影响面。
+
 ---
 
 ## 执行流程相关
