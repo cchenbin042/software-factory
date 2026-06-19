@@ -62,7 +62,14 @@ Agent(
 Feature Request: [USER'S FEATURE DESCRIPTION]
 
 Researcher Findings:
-[RESEARCHER'S FULL OUTPUT]"
+[RESEARCHER'S FULL OUTPUT]
+
+IMPORTANT — Domain Modeling:
+During Phase 0 brainstorming, run the domain-modeling skill to:
+1. Extract and define canonical domain terms for this feature
+2. Produce a Domain Glossary chapter in your blueprint (between User Story and Technical Brief)
+3. Update or create .claude/context/CONTEXT.md with new terms
+4. Offer ADRs for decisions that are hard-to-reverse + surprising + involve real trade-offs"
 )
 ```
 
@@ -110,7 +117,14 @@ Approved Technical Brief:
 [PLANNER'S OUTPUT (technical brief section)]
 
 Researcher Findings:
-[RESEARCHER'S OUTPUT]"
+[RESEARCHER'S OUTPUT]
+
+IMPORTANT — TDD Mode:
+1. Read .claude/context/CONTEXT.md (if it exists) for domain terminology — use these terms exactly in function, variable, and file names
+2. Step 2: Plan test seams before writing any code — identify behaviors, seams, and priorities. Get user approval on the plan.
+3. Step 3: Use TDD — RED→GREEN→REFACTOR, ONE vertical slice at a time. Never write all tests first.
+4. Include a TDD Cycle Log in your summary (behavior tested, test file, seam, result, refactored)
+5. Step 4: Full test suite must pass before reporting. Typecheck and lint must be clean."
 )
 
 // Launch Frontend Builder in parallel
@@ -124,6 +138,15 @@ Approved Technical Brief:
 
 Researcher Findings:
 [RESEARCHER'S OUTPUT]
+
+IMPORTANT — TDD Mode:
+1. Read .claude/context/CONTEXT.md (if it exists) for domain terminology — use these terms exactly in function, variable, and file names
+2. Step 2: Plan test seams before writing any code — identify behaviors, seams, and priorities. Get user approval on the plan.
+3. Step 3: Use TDD — RED→GREEN→REFACTOR, ONE vertical slice at a time. Never write all tests first.
+4. Include a TDD Cycle Log in your summary (behavior tested, test file, seam, result, refactored)
+5. Step 4: Full test suite must pass before reporting. Typecheck and lint must be clean.
+6. All states covered per slice: loading, error, empty, success
+7. Accessibility: Keyboard, Focus, Semantics, Color, Announcements, Forms — check every slice
 
 IMPORTANT: Use the API shapes from the Technical Brief as your contract. If the Backend Builder is running in parallel, the actual API may diverge later — the Validator will catch mismatches."
 )
@@ -266,7 +289,14 @@ Debugger's Root Cause Analysis:
 Fix to apply:
 - File: [path from debugger]
 - Change: [specific change from debugger]
-- Regression risk: [risk level from debugger]"
+- Regression risk: [risk level from debugger]
+
+IMPORTANT — TDD Mode:
+1. Read .claude/context/CONTEXT.md (if it exists) for domain terminology — use these terms exactly in function, variable, and file names
+2. Step 2: Plan test seams before writing any code — identify behaviors, seams, and priorities. Get user approval on the plan.
+3. Step 3: Use TDD — RED→GREEN→REFACTOR, ONE vertical slice at a time. Never write all tests first.
+4. Include a TDD Cycle Log in your summary (behavior tested, test file, seam, result, refactored)
+5. Step 4: Full test suite must pass before reporting. Typecheck and lint must be clean."
 )
 ```
 
@@ -368,6 +398,8 @@ Change:
 Researcher Quick Scan:
 [RESEARCHER'S OUTPUT]
 
+TDD guidance: For this incremental change, write the regression test FIRST (prove the current behavior is broken or absent), then implement the minimal fix, then verify the test passes. Include a brief TDD Cycle Log (1-3 slices) in your summary.
+
 Rules:
 1. Read the files the Researcher identified BEFORE writing any code
 2. Match existing patterns exactly — this is a small change, not a refactor
@@ -391,6 +423,8 @@ Change:
 
 Researcher Quick Scan:
 [RESEARCHER'S OUTPUT]
+
+TDD guidance: For this incremental change, write the regression test FIRST (prove the current behavior is broken or absent), then implement the minimal fix, then verify the test passes. Include a brief TDD Cycle Log (1-3 slices) in your summary.
 
 Rules:
 1. Read the files the Researcher identified BEFORE writing any code
