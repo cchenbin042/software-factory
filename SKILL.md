@@ -1,16 +1,18 @@
 ---
 name: feature-factory
-description: 软件工厂编排流水线——将功能需求转化为完成的、经过测试和验证的实现。通过 7 个专职 Agent 分工协作。支持三种模式：Full（新功能）、Debug（Bug 修复）、Incremental（小改动）。PROACTIVELY invoke when the user wants to build a feature, fix a bug, or make code changes through a structured multi-agent pipeline. Use this whenever the user describes a task that sounds like it needs multiple specialized agents working together.
-license: Apache License 2.0
+description: 当用户需要构建新功能、修复 Bug 或进行代码变更，且希望通过结构化的多 Agent 协作流水线完成时使用。支持 Full（新功能）、Debug（Bug 修复）和 Incremental（小改动）三种模式，通过 7 个专职 Agent 分工协作完成研究、规划、构建、测试和验证。触发短语：/software-factory、构建一个、修复这个 bug、添加功能、实现、重构。
+type: prompt
+version: "1.5.0"
+author: Aubin
+license: Apache-2.0
 tags:
   - agent
   - orchestration
   - tdd
   - claude-code
   - pipeline
-  - software-development
   - code-generation
-compatibility: claude-code
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 # Feature Factory — Software Factory Orchestrator
 
