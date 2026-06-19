@@ -10,6 +10,52 @@
 - **MINOR**（0.X.0）：增强 Skill 逻辑、新增编排规则、模板改进
 - **PATCH**（0.0.X）：Prompt 措辞修正、Bug 修复、文档勘误
 
+## Deprecation 策略
+
+以下规则定义了 Feature Factory 各组件向后兼容的承诺。当某个组件需要以不兼容的方式变更时，
+这些规则告诉维护者如何处理过渡期，告诉用户如何判断自己的 `.claude/` 副本是否需要更新。
+
+### 受影响的组件及策略
+
+| 组件 | 策略 | 说明 |
+|------|------|------|
+| **Agent 定义** (`.claude/agents/*.md`) | 旧格式保留 1 个 MAJOR 版本 | 新增 frontmatter 字段向后兼容（缺少新字段不影响已有行为）。重命名或删除字段时，旧名称在 `deprecated` 注释下保留 1 个 MAJOR 版本后移除。 |
+| **编排 Skill** (`.claude/skills/feature-factory/`) | 旧结构和模板保留 1 个 MINOR 版本 | SKILL.md 和 prompt 模板文件的路径变更时，原位置保留一个 `[MOVED to <new-path>]` 桩文件，1 个 MINOR 版本后移除。 |
+| **规则文件** (`.claude/rules/*.md`) | 立即生效 | 规则文件是纯文本，没有解析依赖。内容变更就是内容变更——CHANGELOG 里写清楚即可。 |
+| **Smoke test** (`smoke.sh`) | 检查项只增不减 | 如果某项检查不再适用，标记为 `# LEGACY: <reason>` 并跳过一次检查，下一个 MAJOR 版本移除。绝不静默删除检查项。 |
+| **命令定义** (`.claude/commands/*.md`) | 参数兼容 1 个 MINOR 版本 | 新增 flag 向后兼容。删除 flag 时保留接受（忽略）1 个 MINOR 版本，然后移除。 |
+| **Domain modeling 制品** (`.claude/context/`) | 不适用 | CONTEXT.md 和 ADR 是项目数据，不是 Feature Factory 的 API。格式变更在 ADR-FORMAT.md 和 CONTEXT-FORMAT.md 中声明。 |
+
+### 版本号触发规则
+
+| 变更类型 | 版本号 bump | 示例 |
+|----------|------------|------|
+| 新增 Agent | MAJOR | v1.x → v2.0 |
+| 删除 Agent | MAJOR | v1.x → v2.0 |
+| 不兼容的流水线架构变更（如模式重排、Agent 职责重定义） | MAJOR | v1.x → v2.0 |
+| 新增编排规则、prompt 模板改进、smoke test 扩展 | MINOR | v1.4 → v1.5 |
+| Prompt 措辞修正、文档勘误、注释修正 | PATCH | v1.4.0 → v1.4.1 |
+
+### 废弃时间线模板
+
+当宣布某个组件废弃时，CHANGELOG 条目必须包含：
+
+```
+### Deprecated
+- **[组件名]**: [废弃内容]。将在 [版本号] 中移除。迁移方式：[一句话说明如何迁移]。
+```
+
+### 用户如何检查兼容性
+
+在目标项目中运行 Feature Factory 的 smoke test 可以检测大部分不兼容问题：
+
+```bash
+bash .claude/tests/smoke.sh
+```
+
+如果 smoke test 通过，你的 `.claude/` 副本与当前版本的 Feature Factory 兼容。
+如果出现 FAIL，查看失败项对应的 Agent 或文件，对照上方表格确定是否需要更新。
+
 ---
 
 ## [1.4.0] — 2026-06-19
