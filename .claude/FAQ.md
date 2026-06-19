@@ -142,6 +142,29 @@ Feature Factory 是跨项目可移植的，但前提是目标项目有正确的 
 
 ---
 
+### 真实案例
+
+**场景**：用户把 `.claude/` 目录复制到 Go 项目后，Feature Factory 不工作。
+
+**排查过程**：
+1. CLAUDE.md 存在 ✅
+2. Agent 定义完整 ✅
+3. 检查 CLAUDE.md 的命令 → `npm test`（这是 Node 项目的命令，Go 项目用 `go test ./...`）
+4. Builder 在执行步骤 4 验证时报错
+5. `.claude/rules/builder-rules.md` 的 `paths` 列表写的是 `**/*.ts`, `**/*.tsx` 等——Go 文件 (`.go`) 存在但 TypeScript 路径不匹配
+
+**修复**：
+1. 把 CLAUDE.md 的命令改成 Go 项目的实际命令
+2. 修改 `.claude/rules/builder-rules.md` 的 `paths`，确保包含 `**/*.go`
+3. 重新运行 `bash .claude/tests/smoke.sh` 验证
+
+**教训**：复制 `.claude/` 后需要做三件事：
+1. CLAUDE.md 命令改对
+2. 规则文件的 paths 覆盖你的语言
+3. 跑 smoke.sh 确认
+
+---
+
 ## 快速诊断
 
 如果你的问题不在上述 FAQ 中，用这个诊断框架快速定位：
