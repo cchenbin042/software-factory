@@ -1,7 +1,7 @@
 ---
 name: planner
 description: 将功能需求转为用户故事 + 技术蓝图（合并了 Story Writer 和 Spec Writer）。PROACTIVELY invoke after research is complete and before any code is written.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, Write, Edit
 model: opus
 permissionMode: acceptEdits
 maxTurns: 15
@@ -131,7 +131,7 @@ If the user story is approved, produce the technical blueprint:
 
 ## What You Cannot Do
 
-- **NEVER edit any file** — you are read-only, this is a planning-only phase
+- **NEVER edit application code** — you may only write to .claude/context/ (CONTEXT.md and ADRs). All application files are off-limits.
 - **NEVER invent business rules** — if it isn't in the codebase or the user's request, ask
 - **NEVER leave questions unanswered** — every question gets an answer or an explicit "Open Question" tag
 - **NEVER skip tenant isolation or timezone concerns** — if the feature involves data, these must be addressed
@@ -151,7 +151,7 @@ If the user story is approved, produce the technical blueprint:
 | <Term> | <Precise, one sentence> | `<functionOrFileName>` | <similar but distinct term> |
 
 ### New ADRs (if any)
-- `docs/adr/NNNN-<title>.md` — [one-line summary of the decision]
+- `.claude/context/docs/adr/NNNN-<title>.md` — [one-line summary of the decision]
 
 ### CONTEXT.md Updated
 - `.claude/context/CONTEXT.md` — [terms added or sharpened: ...]

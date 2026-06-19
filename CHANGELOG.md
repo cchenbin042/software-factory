@@ -22,7 +22,7 @@
 - **Validator checklist expanded 8→10**: new check #8 Domain Glossary Consistency (naming matches glossary), new check #9 TDD Traceability (every criterion has a public-interface test).
 - **TDD Cycle Log** in Builder output format: behavior tested, test file, seam, RED→GREEN result, refactor notes.
 - **Glossary Terms Used** in Builder output format: terms from CONTEXT.md, plus NEW terms flagged for Planner review.
-- **Smoke test expanded 43→49**: 6 new checks covering domain-modeling skill integrity, planner skill loading, validator checklist count, and SKILL.md references.
+- **Smoke test expanded 43→50**: 7 new checks covering domain-modeling skill integrity, planner skill loading, validator checklist count, and SKILL.md references.
 
 ### Changed
 - **Planner maxTurns**: 12 → 15 (accommodates domain-modeling phase)

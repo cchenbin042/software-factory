@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<title>Feature Factory v1.4.0 — Matt Pocock 技能接入技术方案</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+</script>
+<style>
+  .seam { stroke-dasharray: 4 4; }
+  .leak { stroke: #dc2626; }
+  .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+  .glow { box-shadow: 0 0 30px rgba(16,185,129,0.15); }
+  pre.mermaid { font-size: 0.8125rem; }
+  .badge-critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .badge-important { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .badge-minor { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+</style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+
+<main class="max-w-5xl mx-auto px-6 py-12 space-y-16">
+
+<!-- ===== HERO ===== -->
+<header class="space-y-4">
+  <div class="flex items-center gap-3">
+    <span class="text-xs uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full font-semibold">Technical Implementation Plan</span>
+    <span class="text-xs text-stone-400">2026-06-19</span>
+  </div>
+  <h1 class="text-4xl font-bold tracking-tight text-slate-900">
+    Feature Factory v1.3.1 → v1.4.0
+  </h1>
+  <p class="text-xl text-stone-500 max-w-3xl leading-relaxed">
+    选择性接入 Matt Pocock <code class="text-sm bg-stone-200 px-1.5 py-0.5 rounded">skills</code> 工程理论——domain-modeling、TDD、diagnosing-bugs 三大能力注入 7 Agent 流水线，不改编排结构，提升每环节执行质量。
+  </p>
+  <div class="flex gap-3 pt-2 flex-wrap">
+    <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-mono">Phase 1 — 核心升级</span>
+    <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono">4 文件新增 · 5 文件修改</span>
+    <span class="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full font-mono">混合模式（硬门禁 + 软指引）</span>
+  </div>
+</header>
+
+<!-- ===== 1. WHY ===== -->
+<section id="why" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">1. 动机与设计原则</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
+      <h3 class="font-semibold text-base">FF 当前薄弱环节</h3>
+      <ul class="space-y-2 text-sm text-stone-600">
+        <li class="flex gap-2"><span class="text-red-500 shrink-0">✗</span> Planner 不产出领域术语定义，下游 Agent 各自命名</li>
+        <li class="flex gap-2"><span class="text-red-500 shrink-0">✗</span> Builder "实现完再补测试"，非 TDD；一次性写全部测试（水平切片）</li>
+        <li class="flex gap-2"><span class="text-red-500 shrink-0">✗</span> Debugger 从代码分析开始，缺少"先建反馈环"的强制纪律</li>
+        <li class="flex gap-2"><span class="text-red-500 shrink-0">✗</span> Validator 不检查术语一致性和 TDD 可追溯性</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
+      <h3 class="font-semibold text-base">Matt 提供的治疗方案</h3>
+      <ul class="space-y-2 text-sm text-stone-600">
+        <li class="flex gap-2"><span class="text-emerald-500 shrink-0">✓</span> domain-modeling → 共享语言压缩 token + 提升一致性</li>
+        <li class="flex gap-2"><span class="text-emerald-500 shrink-0">✓</span> TDD 垂直切片 → 红-绿-重构循环，反对水平切片</li>
+        <li class="flex gap-2"><span class="text-emerald-500 shrink-0">✓</span> diagnosing-bugs Phase 1 → "无红-capable 命令，不进 Phase 2"</li>
+        <li class="flex gap-2"><span class="text-emerald-500 shrink-0">✓</span> codebase-design 术语 → 深度模块理论注入 Validator</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
+    <h3 class="font-semibold text-base">设计原则（本次接入遵守）</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-stone-600">
+      <div class="bg-stone-50 rounded-lg p-3 border border-stone-100">
+        <p class="font-semibold text-stone-800">1. 不改编排结构</p>
+        <p class="text-xs mt-1">7 Agent 顺序、3 种模式、2 个审批门——全部保持不变。Matt 的技能注入到 Agent 内部 workflow，不改变 Agent 间的输入/输出契约。</p>
+      </div>
+      <div class="bg-stone-50 rounded-lg p-3 border border-stone-100">
+        <p class="font-semibold text-stone-800">2. 混合门禁策略</p>
+        <p class="text-xs mt-1">domain-modeling 和 TDD → 硬门禁（可检查）；diagnosing-bugs 反馈环 → 软指引（调试流程天然需要灵活性）。</p>
+      </div>
+      <div class="bg-stone-50 rounded-lg p-3 border border-stone-100">
+        <p class="font-semibold text-stone-800">3. 学其精神，写进自己</p>
+        <p class="text-xs mt-1">domain-modeling 建独立 skill 文件（跨 Agent 共享基础设施），TDD 和反馈环直接内化到 Agent 定义中（专属流程改造）。不做外部依赖。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. FILE MANIFEST ===== -->
+<section id="manifest" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">2. 文件清单</h2>
+
+  <div class="overflow-hidden rounded-xl border border-stone-200">
+    <table class="w-full text-sm">
+      <thead class="bg-stone-100 text-left">
+        <tr>
+          <th class="px-4 py-2.5 font-semibold w-8">#</th>
+          <th class="px-4 py-2.5 font-semibold">文件路径</th>
+          <th class="px-4 py-2.5 font-semibold w-20">操作</th>
+          <th class="px-4 py-2.5 font-semibold">说明</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        <tr class="bg-emerald-50/30">
+          <td class="px-4 py-2.5 text-stone-400">N1</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/skills/domain-modeling/SKILL.md</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">新增</span></td>
+          <td class="px-4 py-2.5 text-stone-600">独立 domain-modeling skill —— 领域术语挑战、CONTEXT.md 维护、ADR 创建</td>
+        </tr>
+        <tr class="bg-emerald-50/30">
+          <td class="px-4 py-2.5 text-stone-400">N2</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/skills/domain-modeling/CONTEXT-FORMAT.md</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">新增</span></td>
+          <td class="px-4 py-2.5 text-stone-600">CONTEXT.md 格式规范（从 Matt 移植）</td>
+        </tr>
+        <tr class="bg-emerald-50/30">
+          <td class="px-4 py-2.5 text-stone-400">N3</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/skills/domain-modeling/ADR-FORMAT.md</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">新增</span></td>
+          <td class="px-4 py-2.5 text-stone-600">ADR 格式规范（从 Matt 移植）</td>
+        </tr>
+        <tr class="bg-emerald-50/30">
+          <td class="px-4 py-2.5 text-stone-400">N4</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/context/.gitkeep</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">新增</span></td>
+          <td class="px-4 py-2.5 text-stone-600">CONTEXT.md 和 ADR 目录的占位，确保目录结构存在</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M1</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/agents/planner.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">接入 domain-modeling skill；新增 "Domain Glossary" 蓝图章节；产出物双写（蓝图内嵌 + CONTEXT.md 持久化）</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M2</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/agents/backend-builder.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">Workflow 重构为 TDD 循环（Read → Plan Seams → RED/GREEN/REFACTOR → Verify）；读取 CONTEXT.md glossary</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M3</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/agents/frontend-builder.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">与 M2 对称——Workflow 重构为 TDD 循环；读取 CONTEXT.md glossary</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M4</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/agents/debugger.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">Phase 1 (Reproduce) 融合 "Build feedback loop" 纪律——输出必须包含可执行的红-capable 命令</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M5</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/agents/implementation-validator.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">8 → 10 项检查清单；新增 "领域术语一致性" + "TDD 可追溯性"</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M6</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/skills/feature-factory/SKILL.md</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">Planner 和 Builder 的 Agent() 调用模板更新——传递 glossary 和 TDD 指令</td>
+        </tr>
+        <tr class="bg-amber-50/30">
+          <td class="px-4 py-2.5 text-stone-400">M7</td>
+          <td class="px-4 py-2.5 font-mono text-xs">.claude/tests/smoke.sh</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">修改</span></td>
+          <td class="px-4 py-2.5 text-stone-600">新增 6 项检查——domain-modeling skill 完整性、CONTEXT-FORMAT/ADR-FORMAT 存在、Agent skills frontmatter 更新、Validator 清单项数 (10)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-xs text-stone-400">共 <strong>4 个新增文件</strong> + <strong>7 个修改文件</strong>。无文件删除。</p>
+</section>
+
+<!-- ===== 3. ARCHITECTURE DIAGRAM ===== -->
+<section id="architecture" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">3. 架构全景：接入前后对比</h2>
+
+  <p class="text-sm text-stone-500">每个 Agent 内部新增的流程步骤用 <span class="text-emerald-700 font-semibold">绿色标注</span>。编排层（orchestrator）不变。</p>
+
+  <div class="bg-white rounded-xl border border-stone-200 p-6">
+    <p class="text-xs uppercase tracking-wider text-stone-400 mb-3 font-semibold">BEFORE — v1.3.1</p>
+    <pre class="mermaid">
+flowchart LR
+    R[Researcher] --> P[Planner]
+    P --> |"⏸ Human Approve"| BB[Backend Builder]
+    P --> |"⏸ Human Approve"| FB[Frontend Builder]
+    BB --> TV[Test Verifier]
+    FB --> TV
+    TV --> IV[Implementation Validator]
+    IV --> |"⏸ Human Approve"| DONE((PR))
+
+    classDef agent fill:#f8fafc,stroke:#94a3b8,stroke-width:1px;
+    class R,P,BB,FB,TV,IV agent
+    </pre>
+  </div>
+
+  <div class="bg-white rounded-xl border border-emerald-200 p-6 glow">
+    <p class="text-xs uppercase tracking-wider text-emerald-600 mb-3 font-semibold">AFTER — v1.4.0</p>
+    <pre class="mermaid">
+flowchart LR
+    R[Researcher] --> P
+    subgraph P[Planner]
+      direction TB
+      P1["Phase 0: Brainstorming + Domain Modeling"] --> P2["Phase 1: Blueprint + Glossary"]
+    end
+    P --> |"⏸ Human Approve"| BB
+    P --> |"⏸ Human Approve"| FB
+
+    subgraph BB[Backend Builder]
+      direction TB
+      BB1["Step 1: Read + CONTEXT.md"] --> BB2["Step 2: Plan Seams"] --> BB3["Step 3: TDD Loop"]
+    end
+
+    subgraph FB[Frontend Builder]
+      direction TB
+      FB1["Step 1: Read + CONTEXT.md"] --> FB2["Step 2: Plan Seams"] --> FB3["Step 3: TDD Loop"]
+    end
+
+    BB --> TV[Test Verifier]
+    FB --> TV
+    TV --> IV
+    subgraph IV[Implementation Validator]
+      direction TB
+      IV1["8 original checks"] --> IV2["2 new checks: Glossary + TDD"]
+    end
+    IV --> |"⏸ Human Approve"| DONE((PR))
+
+    classDef agent fill:#f8fafc,stroke:#94a3b8,stroke-width:1px;
+    classDef new fill:#ecfdf5,stroke:#10b981,stroke-width:2px;
+    class P1,P2,BB1,BB2,BB3,FB1,FB2,FB3,IV1,IV2 new
+    </pre>
+  </div>
+
+  <p class="text-xs text-stone-400 text-center">编排拓扑不变——7 Agent 顺序执行。改动全部在 Agent 内部流程。</p>
+</section>
+
+<!-- ===== 4. DOMAIN-MODELING SKILL ===== -->
+<section id="domain-modeling" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">4. 新增 Skill：domain-modeling</h2>
+
+  <div class="bg-white rounded-xl border border-stone-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-mono mt-0.5">新文件 N1</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/skills/domain-modeling/SKILL.md</p>
+        <p class="text-xs text-stone-400 mt-0.5">独立 skill，跨 Agent 共享。Planner、Builder、Validator 均可读取其产出物。</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="bg-stone-50 rounded-lg p-3 border border-stone-100">
+        <p class="font-semibold text-stone-800 mb-2">Frontmatter</p>
+        <pre class="text-xs bg-stone-900 text-stone-100 p-3 rounded overflow-x-auto">---
+name: domain-modeling
+description: Build and sharpen a project's domain model.
+  Use when the user wants to pin down domain terminology
+  or record an architectural decision.
+disable-model-invocation: true
+---</pre>
+        <p class="text-xs text-stone-400 mt-1"><code>disable-model-invocation: true</code> —— 仅由 Planner 通过 <code>skills:</code> frontmatter 预加载，不自动触发。</p>
+      </div>
+      <div class="bg-stone-50 rounded-lg p-3 border border-stone-100">
+        <p class="font-semibold text-stone-800 mb-2">核心能力（从 Matt 移植）</p>
+        <ul class="text-xs text-stone-600 space-y-1.5 list-disc list-inside">
+          <li><strong>Challenge against glossary</strong> —— 发现术语冲突立即指出</li>
+          <li><strong>Sharpen fuzzy language</strong> —— 模糊用语 → 规范术语</li>
+          <li><strong>Discuss concrete scenarios</strong> —— 用边界场景检验领域关系</li>
+          <li><strong>Cross-reference with code</strong> —— 代码不匹配口头定义时标记</li>
+          <li><strong>Update CONTEXT.md inline</strong> —— 术语确定即写，不批量</li>
+          <li><strong>Offer ADRs sparingly</strong> —— 仅“难以逆转 + 不记录会困惑 + 真实权衡”三项全满足时</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 rounded-lg p-3 border border-amber-100 text-sm">
+      <p class="font-semibold text-amber-900 mb-1">⚠ 路径差异 vs Matt 原版</p>
+      <p class="text-xs text-amber-700">Matt 的 CONTEXT.md 放在项目根目录。FF 放在 <code class="bg-amber-100 px-1 rounded">.claude/context/CONTEXT.md</code> 和 <code class="bg-amber-100 px-1 rounded">.claude/context/docs/adr/</code> ——保持 FF 包自包含、可移植。</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-mono text-xs font-semibold mb-2">.claude/skills/domain-modeling/CONTEXT-FORMAT.md</p>
+      <p class="text-xs text-stone-500 mb-3">定义 CONTEXT.md 格式——纯 glossary，不含实现细节。</p>
+      <pre class="text-xs bg-stone-900 text-stone-100 p-3 rounded overflow-x-auto">## &lt;Term&gt;
+- **Definition**: precise, one sentence
+- **Synonyms**: aliases used in code
+- **Not to be confused with**: similar but different terms
+- **See also**: related terms
+
+## Relationships
+- A &lt;Term1&gt; has many &lt;Term2&gt;
+
+## Flagged ambiguities
+- &lt;term&gt; was previously used to mean... resolved: ...</pre>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-mono text-xs font-semibold mb-2">.claude/skills/domain-modeling/ADR-FORMAT.md</p>
+      <p class="text-xs text-stone-500 mb-3">定义 ADR 格式——仅当"难以逆转 + 不记录会困惑 + 真实权衡"三项全满足时创建。</p>
+      <pre class="text-xs bg-stone-900 text-stone-100 p-3 rounded overflow-x-auto"># ADR-NNNN: &lt;title&gt;
+
+## Status
+Proposed | Accepted | Deprecated | Superseded
+
+## Context
+What problem are we solving? What constraints?
+
+## Decision
+What did we decide? What was the alternative?
+
+## Consequences
+What becomes easier? Harder? What is the
+migration path?</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. PLANNER ===== -->
+<section id="planner" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">5. 修改 Agent：Planner</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono mt-0.5">M1</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/agents/planner.md</p>
+        <p class="text-xs text-stone-400 mt-0.5">三处改动：frontmatter 新增 skill、Phase 0 增加 domain-modeling 步骤、蓝图新增 Domain Glossary 章节。</p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Change 1 -->
+      <div class="bg-white rounded-lg border border-stone-100 p-4">
+        <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">改动 1 — Frontmatter</p>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-stone-400 mb-1">BEFORE</p>
+            <pre class="bg-stone-900 text-stone-100 p-2 rounded">skills:
+  - brainstorming</pre>
+          </div>
+          <div>
+            <p class="text-emerald-600 mb-1">AFTER</p>
+            <pre class="bg-stone-900 text-emerald-100 p-2 rounded">skills:
+  - brainstorming
+  - domain-modeling</pre>
+          </div>
+        </div>
+        <p class="text-xs text-stone-400 mt-2">maxTurns: 12 → <span class="font-semibold text-amber-700">15</span>（domain-modeling 增加 3 turns 预算）</p>
+      </div>
+
+      <!-- Change 2 -->
+      <div class="bg-white rounded-lg border border-stone-100 p-4">
+        <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">改动 2 — Phase 0 新增 "Domain Modeling" 子步骤</p>
+        <p class="text-xs text-stone-600 leading-relaxed">
+          在 brainstorming 完成后、写 User Story 前，Planner 执行 <strong>domain-modeling</strong>：
+        </p>
+        <ol class="text-xs text-stone-600 mt-2 space-y-1 list-decimal list-inside">
+          <li>挑战用户用词——"你说的 'Account' 是指 Customer 还是 User？"</li>
+          <li>提取规范术语——为每个模糊概念提出精确术语</li>
+          <li>用边界场景检验——"如果 Order 被部分取消，这个术语还成立吗？"</li>
+          <li>产出初步 glossary（3-8 个术语）</li>
+        </ol>
+      </div>
+
+      <!-- Change 3 -->
+      <div class="bg-white rounded-lg border border-stone-100 p-4">
+        <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">改动 3 — 蓝图新增 "Domain Glossary" 章节</p>
+        <p class="text-xs text-stone-600 mb-2">
+          在 User Story 和 Technical Brief 之间插入：
+        </p>
+        <pre class="text-xs bg-stone-900 text-stone-100 p-3 rounded overflow-x-auto">## Domain Glossary
+### Terms for this feature
+| Term | Definition | In Code As | Not To Be Confused With |
+|------|------------|------------|--------------------------|
+| Order | A confirmed purchase request | `Order`, `order.ts` | Cart (pre-confirmation) |
+
+### New ADRs (if any)
+- ADR-0001: [title] — [one-line summary]
+
+### Glossary file updated
+- `.claude/context/CONTEXT.md` — [terms added: ...]</pre>
+        <p class="text-xs text-stone-400 mt-2">⚡ <strong>双写策略</strong>：glossary 内嵌在蓝图中（确保下游 Builder 直接读取），同时持久化到 <code>.claude/context/CONTEXT.md</code>（跨功能累积）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. BUILDERS ===== -->
+<section id="builders" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">6. 修改 Agent：Backend Builder &amp; Frontend Builder</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <p class="text-xs text-amber-700">两份 Builder 做对称修改。以下以 Backend Builder 为例展示，Frontend Builder 同步应用。</p>
+
+    <!-- Workflow comparison -->
+    <div class="bg-white rounded-lg border border-stone-100 p-4">
+      <p class="text-xs uppercase tracking-wider text-stone-400 mb-3 font-semibold">Workflow 重构对比</p>
+      <div class="grid grid-cols-2 gap-6 text-xs">
+        <div>
+          <p class="text-stone-400 mb-2 font-semibold">BEFORE — 4 步</p>
+          <div class="space-y-2">
+            <div class="bg-stone-50 rounded p-2 border border-stone-100">Step 1: Read and Understand</div>
+            <div class="bg-stone-50 rounded p-2 border border-stone-100">Step 2: Plan Your Implementation</div>
+            <div class="bg-stone-50 rounded p-2 border border-stone-100 border-red-300 bg-red-50/50">Step 3: Implement<br><span class="text-red-500">"写所有代码 → 写所有测试"（水平切片）</span></div>
+            <div class="bg-stone-50 rounded p-2 border border-stone-100">Step 4: Verify (typecheck/lint/tests)</div>
+          </div>
+        </div>
+        <div>
+          <p class="text-emerald-700 mb-2 font-semibold">AFTER — 4 步重构</p>
+          <div class="space-y-2">
+            <div class="bg-emerald-50 rounded p-2 border border-emerald-200">Step 1: Read + CONTEXT.md glossary</div>
+            <div class="bg-emerald-50 rounded p-2 border border-emerald-200">Step 2: Plan Test Seams<br><span class="text-emerald-600">产出"行为清单 + 接缝 + 优先级"</span></div>
+            <div class="bg-emerald-50 rounded p-2 border border-emerald-200">Step 3: TDD Loop<br><span class="text-emerald-600 font-semibold">RED → GREEN → REFACTOR (逐切片)</span></div>
+            <div class="bg-emerald-50 rounded p-2 border border-emerald-200">Step 4: Verify (全量回归)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TDD Loop detail -->
+    <div class="bg-white rounded-lg border border-stone-100 p-4">
+      <p class="text-xs uppercase tracking-wider text-stone-400 mb-3 font-semibold">Step 3：TDD 循环详设（硬门禁）</p>
+
+      <div class="mb-4">
+        <p class="text-xs text-stone-500 mb-2">循环结构（替代原"写所有代码再写所有测试"）：</p>
+        <pre class="mermaid">
+flowchart TD
+    SEAMS["Step 2 Output: &lt;br/&gt;行为清单 + 接缝"] --> VERT["Step 3 Output: &lt;br/&gt;按切片输出 RED→GREEN→REFACTOR 日志"]
+    subgraph VERT
+      direction TB
+      L1["Slice 1: 写测试 → 失败 → 最小代码 → 通过 → 重构"] --> L2["Slice 2: 写测试 → 失败 → 最小代码 → 通过 → 重构"]
+      L2 --> L3["Slice 3: ...继续直到所有 behavior 覆盖"]
+    end
+    VERT --> VERIFY["Step 4: 全量回归"]
+        </pre>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-red-50 rounded p-3 border border-red-100">
+          <p class="font-semibold text-xs text-red-800 mb-1">禁止模式（水平切片）</p>
+          <pre class="text-xs text-red-700">RED:   test1, test2, test3, test4
+GREEN: impl1, impl2, impl3, impl4
+→ 测试的是想象的行为，不是实际行为</pre>
+        </div>
+        <div class="bg-emerald-50 rounded p-3 border border-emerald-100">
+          <p class="font-semibold text-xs text-emerald-800 mb-1">要求模式（垂直切片）</p>
+          <pre class="text-xs text-emerald-700">RED→GREEN→REFACTOR: test1→impl1
+RED→GREEN→REFACTOR: test2→impl2
+→ 每个测试响应上一个循环的发现</pre>
+        </div>
+      </div>
+
+      <div class="mt-3 p-3 bg-stone-50 rounded border border-stone-100">
+        <p class="text-xs font-semibold text-stone-700 mb-2">每循环检查清单（硬门禁）</p>
+        <pre class="text-xs text-stone-600">[ ] 测试描述行为，不描述实现
+[ ] 测试仅用公共接口
+[ ] 测试能在内部重构后存活（改名不导致失败）
+[ ] 代码仅满足当前测试——不写预期功能
+[ ] 当前所有测试绿了才进下一个切片</pre>
+      </div>
+    </div>
+
+    <!-- Output format update -->
+    <div class="bg-white rounded-lg border border-stone-100 p-4">
+      <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">输出格式新增 "TDD Cycle Log" 段落</p>
+      <pre class="text-xs bg-stone-900 text-stone-100 p-3 rounded overflow-x-auto">### TDD Cycle Log
+| # | Behavior Tested | Test File | Result | Refactored? |
+|---|-----------------|-----------|--------|-------------|
+| 1 | User can checkout with valid cart | checkout.test.ts | ✅ RED→GREEN | ✅ extracted discount fn |
+| 2 | Empty cart returns error | checkout.test.ts | ✅ RED→GREEN | — |
+| 3 | ... | | | |
+
+### Glossary Terms Used
+- Order, Checkout, Discount (from CONTEXT.md)
+- [any new terms proposed during implementation → Planner should review]
+</pre>
+    </div>
+
+    <div class="bg-amber-50 rounded p-3 border border-amber-100 text-xs">
+      <p class="font-semibold text-amber-900 mb-1">⚠ 与 Planner 的反馈闭环</p>
+      <p class="text-amber-700">如果 Builder 在实现中发现需要新领域术语（CONTEXT.md 中不存在），在 "Glossary Terms Used" 段落中标记为 NEW。Planner 在下一轮修订时将这些术语正式化到 CONTEXT.md。这是 <strong>下游反馈上游</strong> 的闭环。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. DEBUGGER ===== -->
+<section id="debugger" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">7. 修改 Agent：Debugger</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono mt-0.5">M4</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/agents/debugger.md</p>
+        <p class="text-xs text-stone-400 mt-0.5">Phase 1 (Reproduce) 融合 "Build feedback loop" 纪律。不新增阶段——提高完成标准。</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-xs">
+      <div class="bg-white rounded-lg border border-stone-100 p-3">
+        <p class="text-stone-400 mb-2 font-semibold">BEFORE — Phase 1</p>
+        <pre class="text-stone-600 whitespace-pre-wrap">Phase 1: Reproduce the Failure in Your Mind
+1. Clarify the expected behavior
+2. Clarify the actual behavior
+3. Identify the gap
+
+→ 纯心智模型，无强制输出</pre>
+      </div>
+      <div class="bg-white rounded-lg border border-emerald-200 p-3">
+        <p class="text-emerald-700 mb-2 font-semibold">AFTER — Phase 1（融合反馈环）</p>
+        <pre class="text-emerald-700 whitespace-pre-wrap">Phase 1: Build Feedback Loop + Reproduce
+
+1. Construct a pass/fail signal for THIS bug:
+   - 按优先级尝试：failing test → curl script → CLI invocation → headless browser → replay trace → throwaway harness → fuzz loop → bisection
+2. The loop MUST be:
+   □ Red-capable (asserts user's EXACT symptom)
+   □ Deterministic (same verdict every run)
+   □ Fast (seconds, not minutes)
+   □ Agent-runnable (you can invoke it unattended)
+3. 输出格式：
+   **Command**: `[paste the exact invocation]`
+   **Output**: `[paste the output showing RED]`
+   → 没有此输出，不进入 Phase 2</pre>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-2 p-3 bg-white rounded-lg border border-stone-100">
+      <span class="text-amber-500 text-xs mt-0.5">💡</span>
+      <div class="text-xs text-stone-600">
+        <p class="font-semibold mb-1">软指引——不设硬门禁</p>
+        <p>如果 Debugger 经过"按优先级尝试"后说明"无法在无人工干预下建反馈环"，列出尝试过的方案，并请求用户提供 (a) 环境访问、(b) 捕获制品 (HAR/log/core dump) 或 (c) 临时生产插桩授权。然后可直接进入 Phase 2 代码分析。调试环境差异巨大，硬门禁会导致阻塞。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. VALIDATOR ===== -->
+<section id="validator" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">8. 修改 Agent：Implementation Validator</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono mt-0.5">M5</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/agents/implementation-validator.md</p>
+        <p class="text-xs text-stone-400 mt-0.5">检查清单 8 → 10 项。新增 #9 领域术语一致性、#10 TDD 可追溯性。</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- New check 9 -->
+      <div class="bg-white rounded-lg border border-stone-100 p-4">
+        <p class="text-xs uppercase tracking-wider text-emerald-600 mb-2 font-semibold">新增 #9：领域术语一致性</p>
+        <pre class="text-xs text-stone-600 whitespace-pre-wrap">### 9. Domain Glossary Consistency
+- [ ] 函数/变量/文件名使用 CONTEXT.md 中的规范术语
+- [ ] 无同义词漂移——同一概念不用两个词表达
+- [ ] 新引入的术语已标记（供 Planner 正式化）
+
+如何检查：grep CONTEXT.md 的术语列，
+  对比代码库中的函数/变量/文件名。
+  不一致→ Minor（直接修正）或
+  Important（概念性差异需人工判断）
+
+严重度：Minor（命名不一致可自己改）
+       Important（概念性差异需人工判断）</pre>
+      </div>
+
+      <!-- New check 10 -->
+      <div class="bg-white rounded-lg border border-stone-100 p-4">
+        <p class="text-xs uppercase tracking-wider text-emerald-600 mb-2 font-semibold">新增 #10：TDD 可追溯性</p>
+        <pre class="text-xs text-stone-600 whitespace-pre-wrap">### 10. TDD Traceability
+- [ ] 每个 acceptance criterion 对应至少一个
+    通过公共接口的测试
+- [ ] 测试描述行为而非实现
+- [ ] 无"水平切片"痕迹——测试按 behavior 组织
+    而非按 layer 组织
+
+如何检查：交叉引用 User Story 的
+  acceptance criteria 编号 vs Builder 的
+  TDD Cycle Log，验证 1:1 对应关系
+
+严重度：Important（缺少对应测试）
+       Minor（测试命名不规范可自己改）</pre>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg border border-stone-100 p-4">
+      <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">严重度归类更新</p>
+      <div class="overflow-hidden rounded-lg border border-stone-200">
+        <table class="w-full text-xs">
+          <thead class="bg-stone-50">
+            <tr><th class="px-3 py-1.5 text-left">检查项</th><th class="px-3 py-1.5 text-left">严重度</th><th class="px-3 py-1.5 text-left">处理方式</th></tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            <tr><td class="px-3 py-1.5">1-8 (原有)</td><td class="px-3 py-1.5">不变</td><td class="px-3 py-1.5">不变</td></tr>
+            <tr class="bg-emerald-50/50"><td class="px-3 py-1.5 font-semibold">9. 领域术语一致性</td><td class="px-3 py-1.5">Minor / Important</td><td class="px-3 py-1.5">命名不一致→ Minor（直接改）；概念性差异→ Important（报告）</td></tr>
+            <tr class="bg-emerald-50/50"><td class="px-3 py-1.5 font-semibold">10. TDD 可追溯性</td><td class="px-3 py-1.5">Important / Minor</td><td class="px-3 py-1.5">缺少对应测试→ Important（报告）；测试命名不规范→ Minor（直接改）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 9. ORCHESTRATOR ===== -->
+<section id="orchestrator" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">9. 修改编排层：SKILL.md</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono mt-0.5">M6</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/skills/feature-factory/SKILL.md</p>
+        <p class="text-xs text-stone-400 mt-0.5">更新 Planner 和 Builder 的 Agent() 调用模板——传递 glossary 引用和 TDD 指令。</p>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div class="bg-white rounded-lg border border-stone-100 p-3">
+        <p class="text-xs font-semibold text-stone-700 mb-1">Planner 调用模板更新（Step 2）</p>
+        <p class="text-xs text-stone-500">原 prompt 不变，新增一行指令：</p>
+        <pre class="text-xs bg-stone-900 text-emerald-100 p-2 rounded mt-1">IMPORTANT: During Phase 0 brainstorming, run domain-modeling
+to extract and define domain terms. Produce a Domain Glossary
+section in your blueprint. Update .claude/context/CONTEXT.md
+with new terms.</pre>
+      </div>
+
+      <div class="bg-white rounded-lg border border-stone-100 p-3">
+        <p class="text-xs font-semibold text-stone-700 mb-1">Builder 调用模板更新（Step 4）</p>
+        <p class="text-xs text-stone-500">原 prompt 新增 TDD 和 glossary 指令：</p>
+        <pre class="text-xs bg-stone-900 text-emerald-100 p-2 rounded mt-1">IMPORTANT — TDD Mode:
+1. Read .claude/context/CONTEXT.md for domain terminology
+2. Plan test seams before writing code (Step 2)
+3. Use TDD: RED→GREEN→REFACTOR, one vertical slice at a time
+4. Include a TDD Cycle Log in your summary
+5. Full test suite must pass before reporting (Step 4)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 10. SMOKE TEST ===== -->
+<section id="smoke" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">10. 测试更新：smoke.sh</h2>
+
+  <div class="bg-amber-50 rounded-xl border border-amber-200 p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="shrink-0 text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-mono mt-0.5">M7</span>
+      <div>
+        <p class="font-mono text-sm font-semibold">.claude/tests/smoke.sh</p>
+        <p class="text-xs text-stone-400 mt-0.5">43 → 49 项检查。新增 6 项验证本次接入的结构完整性。</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg border border-stone-100 p-4">
+      <p class="text-xs uppercase tracking-wider text-stone-400 mb-2 font-semibold">新增检查项</p>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 44</span>
+          <span><code>.claude/skills/domain-modeling/SKILL.md</code> 存在且 frontmatter 包含 <code>disable-model-invocation: true</code></span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 45</span>
+          <span><code>.claude/skills/domain-modeling/CONTEXT-FORMAT.md</code> 存在</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 46</span>
+          <span><code>.claude/skills/domain-modeling/ADR-FORMAT.md</code> 存在</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 47</span>
+          <span><code>planner.md</code> frontmatter 的 <code>skills:</code> 包含 <code>domain-modeling</code>，maxTurns ≥ 15</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 48</span>
+          <span><code>implementation-validator.md</code> 检查清单包含 ≥ 10 项</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-emerald-500 font-mono shrink-0">CHECK 49</span>
+          <span><code>SKILL.md</code> 中 Planner 调用模板包含 <code>domain-modeling</code> 引用</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-xs text-stone-500">目标：<code class="bg-stone-200 px-1 rounded">./smoke.sh</code> 输出 <strong>49 PASS, 0 WARN, 0 FAIL</strong></p>
+  </div>
+</section>
+
+<!-- ===== 11. RISK ASSESSMENT ===== -->
+<section id="risks" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">11. 风险评估与缓解</h2>
+
+  <div class="overflow-hidden rounded-xl border border-stone-200">
+    <table class="w-full text-sm">
+      <thead class="bg-stone-100 text-left">
+        <tr>
+          <th class="px-4 py-2.5 font-semibold w-8">#</th>
+          <th class="px-4 py-2.5 font-semibold">风险</th>
+          <th class="px-4 py-2.5 font-semibold w-20">概率</th>
+          <th class="px-4 py-2.5 font-semibold w-20">影响</th>
+          <th class="px-4 py-2.5 font-semibold">缓解措施</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        <tr>
+          <td class="px-4 py-2.5 text-stone-400">R1</td>
+          <td class="px-4 py-2.5"><strong>TDD 循环增加 Builder 耗时</strong>，maxTurns=20 可能不够</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">中</span></td>
+          <td class="px-4 py-2.5">中</td>
+          <td class="px-4 py-2.5 text-stone-600">TDD 循环中每个切片 3 turns (RED/GREEN/REFACTOR)，假设 5 slices = 15 turns + 5 turns 开销 = 20。首次运行后监控，若频繁超限则上调到 25</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5 text-stone-400">R2</td>
+          <td class="px-4 py-2.5"><strong>CONTEXT.md 未初始化</strong>，Builder 找不到 glossary 文件</td>
+          <td class="px-4 py-2.5"><span class="badge-important text-xs px-2 py-0.5 rounded-full">中</span></td>
+          <td class="px-4 py-2.5">低</td>
+          <td class="px-4 py-2.5 text-stone-600">Builder prompt 中加"如果 CONTEXT.md 不存在，使用 Technical Brief 中的 Domain Glossary 章节，并在摘要中建议运行 Planner 初始化 CONTEXT.md"</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5 text-stone-400">R3</td>
+          <td class="px-4 py-2.5"><strong>Debugger "建反馈环"在无运行时环境时无法完成</strong>，阻塞流程</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">低</span></td>
+          <td class="px-4 py-2.5">低</td>
+          <td class="px-4 py-2.5 text-stone-600">设计为软指引——Debugger 列出尝试方案后可直接进入代码分析。不设硬门禁</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5 text-stone-400">R4</td>
+          <td class="px-4 py-2.5"><strong>术语不一致的 Minor fix 可能引入语义错误</strong></td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">低</span></td>
+          <td class="px-4 py-2.5">中</td>
+          <td class="px-4 py-2.5 text-stone-600">Validator 的"术语一致性"Minor fix 仅限于变量/文件重命名安全性高的场景。概念性差异报告为 Important，不自动修</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5 text-stone-400">R5</td>
+          <td class="px-4 py-2.5"><strong>Backend/Frontend Builder 的 TDD 循环可能产生不同的测试风格</strong>，破坏一致性</td>
+          <td class="px-4 py-2.5"><span class="badge-minor text-xs px-2 py-0.5 rounded-full">低</span></td>
+          <td class="px-4 py-2.5">低</td>
+          <td class="px-4 py-2.5 text-stone-600">两个 Builder 共享相同的 TDD 循环规范和检查清单。Validator 的 #10 检查（TDD 可追溯性）会在合并前发现不一致</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 12. DESIGN DECISIONS ===== -->
+<section id="decisions" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">12. 核心设计决策记录</h2>
+
+  <div class="space-y-4">
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-1：接入范围限定 Phase 1</p>
+      <p class="text-xs text-stone-600">只接入 domain-modeling、TDD、diagnosing-bugs Phase 1。grilling 交互式追问、codebase-design 深度模块、prototype 原型保留为 Phase 2 候选。理由：改动面小、收益明确、一个下午可完成。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-2：混合门禁</p>
+      <p class="text-xs text-stone-600">domain-modeling (glossary 产出) 和 TDD (RED→GREEN→REFACTOR) 设硬门禁——结构化的、可检查的。diagnosing-bugs 反馈环设软指引——调试环境差异巨大，硬门禁会导致阻塞。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-3：domain-modeling 独立文件 + 其余内化</p>
+      <p class="text-xs text-stone-600">glossary 是跨 Agent 共享的基础设施——独立成 skill 文件。TDD 和调试流程是特定 Agent 的内部纪律——直接改写 Agent 定义，更简洁、token 更省。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-4：CONTEXT.md 放在 .claude/context/ 下</p>
+      <p class="text-xs text-stone-600">与 Matt 原版（项目根目录）不同，FF 包放在 .claude/ 下保持自包含、可移植。smoke test 已校验 .claude/ 内交叉引用。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-5：Builder Step 2 + Step 3 嵌入替换</p>
+      <p class="text-xs text-stone-600">保留 Step 1 (Read) 和 Step 4 (Verify)，Step 2 改造成"Plan Test Seams"，Step 3 改造成"TDD Loop"。保留独立的 Step 4 全量回归保险。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-6：Debugger Phase 1 融合而非新增</p>
+      <p class="text-xs text-stone-600">将"Build feedback loop"要求融入现有 Reproduce 阶段的完成标准——不增加阶段数，不增加 maxTurns 压力，但实质性提升质量门槛。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-7：Validator 扩展 2 项——硬门禁检查</p>
+      <p class="text-xs text-stone-600">领域术语一致性和 TDD 可追溯性是本次接入的核心收益点，不在 Validator 中验证则无法形成闭环。两项都是可机器核查的。</p>
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <p class="font-semibold text-sm mb-1">DD-8：Glossary 内嵌蓝图 + 独立文件双写</p>
+      <p class="text-xs text-stone-600">蓝图内嵌确保下游 Builder 直接读取（蓝图是唯一输入源），独立文件实现跨功能累积。Planner 最终步骤更新 CONTEXT.md。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 13. MIGRATION PLAN ===== -->
+<section id="migration" class="space-y-6">
+  <h2 class="text-2xl font-bold tracking-tight border-b border-stone-200 pb-2">13. 实施步骤与迁移路径</h2>
+
+  <div class="bg-white rounded-xl border border-stone-200 p-5 space-y-4">
+    <p class="text-xs text-stone-500">以下步骤按依赖关系排序。每步完成后运行 smoke.sh 确保无回归。</p>
+
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">1</span>
+        <div>
+          <p class="font-semibold text-sm">创建领域基础设施（N1-N4）</p>
+          <p class="text-xs text-stone-500">新建 <code>.claude/skills/domain-modeling/</code> 目录及其 3 个文件 + <code>.claude/context/.gitkeep</code>。此时新文件对流水线无影响。</p>
+          <p class="text-xs text-stone-400 mt-0.5">🔄 可逆：删除文件即可回退。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">2</span>
+        <div>
+          <p class="font-semibold text-sm">更新 smoke test（M7）</p>
+          <p class="text-xs text-stone-500">新增 6 项检查。当前 (43/43) 应变为 (43/49) 失败——因为新文件还不存在。这是预期行为。</p>
+          <p class="text-xs text-stone-400 mt-0.5">🔄 可逆：删除新增检查即可回退。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">3</span>
+        <div>
+          <p class="font-semibold text-sm">修改 Agent 定义（M1-M5）</p>
+          <p class="text-xs text-stone-500">按顺序：Planner → Backend Builder → Frontend Builder → Debugger → Validator。每个 Agent 改完后单独验证 frontmatter 可解析。</p>
+          <p class="text-xs text-stone-400 mt-0.5">🔄 可逆：git revert 每个文件。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">4</span>
+        <div>
+          <p class="font-semibold text-sm">更新编排层（M6）</p>
+          <p class="text-xs text-stone-500">更新 SKILL.md 中 Planner 和 Builder 的 Agent() 调用模板——添加 glossary 和 TDD 指令。</p>
+          <p class="text-xs text-stone-400 mt-0.5">🔄 可逆：git revert。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">5</span>
+        <div>
+          <p class="font-semibold text-sm">全量 smoke test 验证</p>
+          <p class="text-xs text-stone-500">运行 <code>./smoke.sh</code>，目标 <strong>49 PASS, 0 WARN, 0 FAIL</strong>。如果失败，修复后重跑。</p>
+          <p class="text-xs text-stone-400 mt-0.5">这是变更完成的门禁条件。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center text-xs font-bold">6</span>
+        <div>
+          <p class="font-semibold text-sm">端到端冒烟（手动）</p>
+          <p class="text-xs text-stone-500">在一个测试项目中运行 Full 模式 pipeline——验证 Planner 产出 glossary、Builder 走 TDD 循环、Validator 检查术语和 TDD。</p>
+          <p class="text-xs text-stone-400 mt-0.5">可选：用 Feature Factory 自身作为目标项目测试。</p>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 w-7 h-7 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center text-xs font-bold">7</span>
+        <div>
+          <p class="font-semibold text-sm">更新版本号和 CHANGELOG</p>
+          <p class="text-xs text-stone-500">VERSION → <code>1.4.0</code>，CHANGELOG.md 新增条目——Added: domain-modeling skill, TDD workflow, feedback loop discipline, 2 new Validator checks。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="space-y-4 pt-8 border-t border-stone-200">
+  <div class="flex items-center justify-between text-xs text-stone-400">
+    <span>Feature Factory v1.4.0 — Technical Implementation Plan</span>
+    <span>2026-06-19 · 8 design decisions · 11 files · 0 deletions</span>
+  </div>
+  <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-4 text-sm">
+    <p class="font-semibold text-emerald-900">下一步</p>
+    <p class="text-emerald-700 text-xs mt-1">此方案已获用户批准。进入 <code class="bg-emerald-100 px-1 rounded">writing-plans</code> 阶段——将各节拆分为可执行的 implement task 清单，按依赖关系排序，逐项实现。</p>
+  </div>
+</footer>
+
+</main>
+</body>
+</html>

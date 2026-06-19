@@ -91,7 +91,7 @@ echo ""
 echo "── Tool Permissions ──"
 
 # Read-only agents must NOT have Write/Edit/Bash
-READONLY_AGENTS=("researcher" "debugger" "planner")
+READONLY_AGENTS=("researcher" "debugger")
 RESTRICTED_TOOLS=("Write" "Edit" "Bash")
 
 for agent in "${READONLY_AGENTS[@]}"; do
@@ -108,7 +108,7 @@ for agent in "${READONLY_AGENTS[@]}"; do
 done
 
 # Builders and Verifier/Validator must have Write/Edit
-MUTATING_AGENTS=("backend-builder" "frontend-builder" "test-verifier" "implementation-validator")
+MUTATING_AGENTS=("backend-builder" "frontend-builder" "test-verifier" "implementation-validator" "planner")
 for agent in "${MUTATING_AGENTS[@]}"; do
   agent_file="$AGENT_DIR/$agent.md"
   fm=$(sed -n '/^---$/,/^---$/p' "$agent_file" | sed '1d;$d')
