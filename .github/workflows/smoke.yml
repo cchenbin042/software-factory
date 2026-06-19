@@ -1,0 +1,31 @@
+name: Pipeline Smoke Test
+
+on:
+  push:
+    paths:
+      - '.claude/agents/**'
+      - '.claude/commands/**'
+      - '.claude/context/**'
+      - '.claude/rules/**'
+      - '.claude/skills/**'
+      - '.claude/tests/**'
+  pull_request:
+    paths:
+      - '.claude/agents/**'
+      - '.claude/commands/**'
+      - '.claude/context/**'
+      - '.claude/rules/**'
+      - '.claude/skills/**'
+      - '.claude/tests/**'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure smoke test is executable
+        run: test -x .claude/tests/smoke.sh || chmod +x .claude/tests/smoke.sh
+
+      - name: Run pipeline smoke test
+        run: bash .claude/tests/smoke.sh --ci
