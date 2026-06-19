@@ -76,3 +76,21 @@ echo "  1. Edit $TARGET/CLAUDE.md — fill in your tech stack, commands, rules"
 echo "  2. (Optional) Install Superpowers plugin for Planner brainstorming:"
 echo "     claude plugins install anthropics/superpowers"
 echo "  3. Try it: /feature-factory <your feature description>"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Recommended: Superpowers Plugin"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Feature Factory's Planner uses Superpowers for interactive"
+echo "brainstorming. Without it, Planner falls back to an inline"
+echo "process that works but is less polished."
+echo ""
+echo "Install it for the full experience:"
+echo "  claude plugins install anthropics/superpowers"
+echo ""
+read -p "Install Superpowers now? [Y/n] " answer
+if [ "$answer" != "n" ] && [ "$answer" != "N" ]; then
+  claude plugins install anthropics/superpowers 2>/dev/null || \
+    echo "  → Skipped (claude CLI not available in this environment)"
+fi

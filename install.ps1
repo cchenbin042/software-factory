@@ -69,3 +69,20 @@ Write-Host "Next steps:"
 Write-Host "  1. Edit $TargetPath\CLAUDE.md — fill in your tech stack, commands, rules"
 Write-Host "  2. (Optional) Install Superpowers plugin: claude plugins install anthropics/superpowers"
 Write-Host "  3. Try it: /feature-factory <your feature description>"
+
+Write-Host ""
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+Write-Host "  Recommended: Superpowers Plugin"
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+Write-Host ""
+Write-Host "Feature Factory's Planner uses Superpowers for interactive"
+Write-Host "brainstorming. Without it, Planner falls back to an inline"
+Write-Host "process that works but is less polished."
+Write-Host ""
+Write-Host "Install it for the full experience:"
+Write-Host "  claude plugins install anthropics/superpowers"
+Write-Host ""
+$answer = Read-Host "Install Superpowers now? [Y/n]"
+if ($answer -ne 'n' -and $answer -ne 'N') {
+  try { claude plugins install anthropics/superpowers } catch { Write-Host "  → Skipped (claude CLI not available in this environment)" }
+}
