@@ -36,6 +36,14 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# ─── CI Mode ─────────────────────────────────────────────────────
+# In CI mode, warnings don't affect the exit code.
+# Pass --ci as the first argument.
+CI_MODE=false
+if [ "${1:-}" = "--ci" ]; then
+  CI_MODE=true
+fi
+
 PASS=0
 WARN=0
 FAIL=0
@@ -423,12 +431,16 @@ if [ "$FAIL" -gt 0 ]; then
   echo ""
   echo "Verdict: ERRORS FOUND — pipeline may not function correctly."
   exit 2
-elif [ "$WARN" -gt 0 ]; then
+elif [ "$WARN" -gt 0 ] && [ "$CI_MODE" = false ]; then
   echo ""
   echo "Verdict: WARNINGS ONLY — pipeline should work but may have suboptimal config."
   exit 1
 else
   echo ""
-  echo "Verdict: CLEAN — all checks passed."
+  if [ "$CI_MODE" = true ] && [ "$WARN" -gt 0 ]; then
+    echo "Verdict: CLEAN (${WARN} warning(s) suppressed in CI mode)"
+  else
+    echo "Verdict: CLEAN — all checks passed."
+  fi
   exit 0
 fi
