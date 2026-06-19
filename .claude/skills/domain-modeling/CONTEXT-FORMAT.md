@@ -31,4 +31,3 @@
 6. **Flagged ambiguities is a log.** Append to it; never delete entries. It shows how the language evolved.
 7. **No implementation details.** This is not where you document API shapes, database schemas, or file paths.
 8. **Create lazily.** If no terms have been resolved, don't create an empty file.
-```
