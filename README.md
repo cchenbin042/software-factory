@@ -82,6 +82,34 @@ cp .claude/CLAUDE.md.template /your-project/CLAUDE.md
 - [Claude Code](https://code.claude.com)
 - 推荐安装 [Superpowers](https://github.com/anthropics/superpowers) 插件（Planner 的 brainstorming 功能依赖它）
 
+## Token 消耗参考
+
+以下估算基于**中型 TypeScript 项目**（~150 文件、~20 个 API 端点）。实际消耗取决于项目规模、功能复杂度和 Agent 是否需要重试。数量级参考，不是精确报价。
+
+### 按模式
+
+| 模式 | Agent 序列 | 预计输入 tokens | 预计输出 tokens | 参考耗时 |
+|------|-----------|:---------------:|:---------------:|:--------:|
+| **Full** | Researcher(Opus) → Planner(Opus) → 2×Builder(Sonnet) → Verifier(Haiku) → Validator(Haiku) | ~80K | ~40K | 5-8 min |
+| **Debug** | Debugger(Opus) → Builder(Sonnet) → Verifier(Haiku) → Validator(Haiku) | ~50K | ~25K | 3-5 min |
+| **Incremental** | Researcher(Opus, quick) → Builder(Sonnet) → Verifier(Haiku) → Validator(Haiku) | ~30K | ~15K | 2-4 min |
+
+### 影响消耗的因素
+
+| 因素 | 影响 |
+|------|------|
+| **项目规模** | 大型项目（500+ 文件）输入消耗可能翻倍——Researcher 需要扫描更多文件，Builder 需要理解更多上下文 |
+| **功能复杂度** | 多模型关联、跨模块修改 → Planner 输出更长、Builder TDD 循环更多 |
+| **Agent 重试** | Planner 蓝图被驳回或 Builder 测试失败时，重试消耗与首次相近 |
+| **Superpowers 可用性** | Superpowers 可用时 Planner 的 brainstorming 更高效（更少探索轮次）；不可用时内联流程约增加 10-20% Planner 输出 |
+
+### 省钱技巧
+
+- **小改动用 Incremental，不要用 Full**——省掉 Planner 的深度分析和完整的并行 Builder
+- **写清楚需求**——模糊的需求导致 Planner 反复澄清，每次澄清都消耗 tokens
+- **CLAUDE.md 写完整**——Researcher 如果找不到项目结构，会花更多轮次在搜索上
+- **信任 Validator 的 Minor 自动修复**——不要为了命名风格问题重新跑整个流水线
+
 ## 端到端示例
 
 以下是 `/feature-factory 构建发票催收功能，对超过7天未支付的发票自动发送提醒` 的完整流水线输出摘要。
