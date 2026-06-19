@@ -40,17 +40,19 @@ cp .claude/CLAUDE.md.template /your-project/CLAUDE.md
 
 ### 3. 启动工厂
 
+> **注意**：v1.5.0 起，命令名已从 `/feature-factory` 更名为 `/software-factory`。如果之前用过旧名，请更新你的 alias 或快捷指令。
+
 ```bash
-/feature-factory 构建发票催收功能，对超过7天未支付的发票自动发送提醒
+/software-factory 构建发票催收功能，对超过7天未支付的发票自动发送提醒
 ```
 
 ## 三种模式
 
 | 命令 | 模式 | 流程 |
 |------|------|------|
-| `/feature-factory <描述>` | Full 完整 | Researcher → Planner → Builders → Verifier → Validator |
-| `/feature-factory --debug <Bug>` | Debug 调试 | Debugger → Builder(s) → Verifier → Validator |
-| `/feature-factory --incremental <变更>` | Incremental 增量 | Researcher (quick) → Builder(s) → Verifier → Validator |
+| `/software-factory <描述>` | Full 完整 | Researcher → Planner → Builders → Verifier → Validator |
+| `/software-factory --debug <Bug>` | Debug 调试 | Debugger → Builder(s) → Verifier → Validator |
+| `/software-factory --incremental <变更>` | Incremental 增量 | Researcher (quick) → Builder(s) → Verifier → Validator |
 | `/debug <Bug>` | 仅分析 | Debugger → 输出报告 → 询问是否修复 |
 
 ## 7 个 Agent
@@ -114,7 +116,7 @@ cp .claude/CLAUDE.md.template /your-project/CLAUDE.md
 
 ## 端到端示例
 
-以下是 `/feature-factory 构建发票催收功能，对超过7天未支付的发票自动发送提醒` 的完整流水线输出摘要。
+以下是 `/software-factory 构建发票催收功能，对超过7天未支付的发票自动发送提醒` 的完整流水线输出摘要。
 
 ### Step 1: Researcher 报告（节选）
 
