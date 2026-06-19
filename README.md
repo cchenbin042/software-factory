@@ -6,6 +6,8 @@
 
 ## 快速开始
 
+> 🎬 **3 分钟演示**：[观看 Feature Factory 完整流水线](https://youtu.be/XXXXX)
+
 ### 1. 安装
 
 **方式 A：一键安装脚本（推荐）**
