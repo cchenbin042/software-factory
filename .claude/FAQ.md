@@ -16,6 +16,21 @@ Agent 的输出结构不完整、格式不对、或者内容明显错误时：
 4. **尝试重试**——编排者会调用重试流程（"Your previous output had [problem]. Fix it and re-produce."），第一次失败很可能是上下文丢失或任务切割问题
 5. **拆分任务**——如果同一个 Agent 同一类问题反复出现，把任务拆小。比如把一个大的 Builder 任务拆成"先做 migration"→"再做 service"→"最后做 route"三个小 Agent
 
+### 真实案例
+
+**场景**：用户在 NestJS 项目中使用 Feature Factory，Backend Builder 每次都
+在 Step 4（验证）阶段报 `typecheck: command not found`。
+
+**排查过程**：
+1. 检查 CLAUDE.md → 写的 typecheck 命令是 `npm run typecheck`
+2. 检查目标项目的 `package.json` → scripts 里没有 `typecheck`，实际命令是 `tsc --noEmit`
+3. Builder 按照 CLAUDE.md 的指令调用了不存在的 npm script
+
+**修复**：将 CLAUDE.md 中的命令改为项目实际使用的 `tsc --noEmit`。
+
+**教训**：CLAUDE.md 里的命令必须跟项目的 `package.json`/`Makefile`/`pyproject.toml` 保持一致。
+安装 Feature Factory 后第一件事就是验证 CLAUDE.md 里的命令能不能跑通。
+
 ### Q2: Researcher 说"没找到相关信息"怎么办？
 
 这不一定是 Researcher 失败——可能是你的代码库确实没有任何相关文件，也可能是 Researcher 的搜索路径不够广。
