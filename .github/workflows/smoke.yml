@@ -3,20 +3,28 @@ name: Pipeline Smoke Test
 on:
   push:
     paths:
-      - '.claude/agents/**'
-      - '.claude/commands/**'
-      - '.claude/context/**'
-      - '.claude/rules/**'
-      - '.claude/skills/**'
-      - '.claude/tests/**'
+      - '.claude/**'
+      - '.github/workflows/smoke.yml'
+      - 'references/**'
+      - 'scripts/**'
+      - 'SKILL.md'
+      - 'CLAUDE.md'
+      - 'CHANGELOG.md'
+      - 'VERSION'
+      - 'LICENSE'
+      - 'README.md'
   pull_request:
     paths:
-      - '.claude/agents/**'
-      - '.claude/commands/**'
-      - '.claude/context/**'
-      - '.claude/rules/**'
-      - '.claude/skills/**'
-      - '.claude/tests/**'
+      - '.claude/**'
+      - '.github/workflows/smoke.yml'
+      - 'references/**'
+      - 'scripts/**'
+      - 'SKILL.md'
+      - 'CLAUDE.md'
+      - 'CHANGELOG.md'
+      - 'VERSION'
+      - 'LICENSE'
+      - 'README.md'
 
 jobs:
   smoke:

@@ -30,7 +30,6 @@ feature-factory/
 ├── references/                  ← ★ 规范源（捆绑资源）
 │   ├── agents/                  ← 7 Agent 定义
 │   ├── rules/                   ← 3 规则文件
-│   ├── prompts/                 ← 20 Prompt 模板
 │   ├── commands/                ← 2 入口命令
 │   ├── domain-modeling/         ← 领域建模 Skill
 │   └── docs/                    ← FAQ、CLAUDE.md 模板
@@ -45,14 +44,12 @@ feature-factory/
 
 - `SKILL.md` — ★ ModelScope/Skill 入口，完整编排 Skill 定义
 - `references/agents/*.md` — 7 个 Agent 定义（YAML frontmatter + body）
-- `references/prompts/` — 20 个 Prompt 模板（三种模式 + 共享）
-- `references/commands/software-factory.md` — `/software-factory` 入口命令
-- `references/commands/debug.md` — `/debug` 独立调试命令
 - `references/rules/builder-rules.md` — Builder 共享的 13 条质量准则
+- `references/commands/debug.md` — `/debug` 独立调试命令
 - `references/rules/git-workflow.md` — Git 工作流集成（分支命名、提交策略、冲突预防）
 - `references/rules/failure-recovery.md` — 失败恢复与 5 个反馈闭环流程
 - `references/domain-modeling/SKILL.md` — 领域建模 Skill
-- `scripts/smoke.sh` — Pipeline 完整性验证脚本（62 项检查）
+- `scripts/smoke.sh` — Pipeline 完整性验证脚本（55+ 项检查）
 - `references/docs/FAQ.md` — 常见问题和排查指南
 
 ## Agent 定义规范
@@ -78,7 +75,7 @@ skills:  # 可选——预加载到 Agent 上下文的 Skill 列表
 - Agent 定义不包含项目特定代码引用
 - Builder 共享规则是通用的质量准则
 - SKILL.md 是 ModelScope 规范的 Skill 入口（根目录仅此 1 个 SKILL.md）
-- 绑定资源在 `references/`（Agent、Prompt、规则）、`scripts/`（安装/测试脚本）和 `assets/`（图标）目录下
+- 绑定资源在 `references/`（Agent、规则）、`scripts/`（安装/测试脚本）和 `assets/`（图标）目录下
 - 每个目标项目需要自己的 CLAUDE.md（从 `references/docs/CLAUDE.md.template` 创建）
 
 ## 已知依赖
