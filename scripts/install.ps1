@@ -2,6 +2,14 @@
 # Usage:
 #   .\install.ps1 -TargetPath C:\path\to\target-project   # 项目级安装
 #   .\install.ps1 -User                                    # 用户级安装（所有项目可用）
+#
+# Execution Policy: If you see "running scripts is disabled", run:
+#   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+# Or bypass for one session:
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TargetPath C:\path\to\target-project
+#
+# Bash dependency: The smoke test and install.sh require bash.
+# Windows users can use Git Bash (included with Git for Windows) or WSL.
 
 param(
   [Parameter(Mandatory=$false, HelpMessage="Path to target project directory")]
@@ -69,10 +77,29 @@ Write-Host ""
 
 if ($User) {
   Write-Host "→ Copying to $TargetPath\ ..."
-  Copy-Item -Path "$SrcPath\.claude\*" -Destination "$TargetPath\" -Recurse -Force
+  # Copy without overwriting existing files — preserves user customizations
+  Get-ChildItem -Path "$SrcPath\.claude" | ForEach-Object {
+    $targetItem = Join-Path $TargetPath $_.Name
+    if (Test-Path $targetItem -PathType Container) {
+      robocopy $_.FullName $targetItem /E /XC /XN /XO /NFL /NDL /NJH /NJS | Out-Null
+    } elseif (-not (Test-Path $targetItem)) {
+      Copy-Item -Path $_.FullName -Destination $targetItem -Recurse
+    }
+  }
 } else {
   Write-Host "→ Copying .claude\ ..."
-  Copy-Item -Path "$SrcPath\.claude" -Destination "$TargetPath\.claude" -Recurse -Force
+  $claudeTarget = "$TargetPath\.claude"
+  if (-not (Test-Path $claudeTarget)) {
+    New-Item -ItemType Directory -Path $claudeTarget -Force | Out-Null
+  }
+  Get-ChildItem -Path "$SrcPath\.claude" | ForEach-Object {
+    $targetItem = Join-Path $claudeTarget $_.Name
+    if (Test-Path $targetItem -PathType Container) {
+      robocopy $_.FullName $targetItem /E /XC /XN /XO /NFL /NDL /NJH /NJS | Out-Null
+    } elseif (-not (Test-Path $targetItem)) {
+      Copy-Item -Path $_.FullName -Destination $targetItem -Recurse
+    }
+  }
 }
 
 # Root-level CLAUDE.md template
@@ -109,7 +136,7 @@ if ($User) {
   Write-Host "Next steps:"
   Write-Host "  1. For each project: copy ~\.claude\CLAUDE.md.template to the project as CLAUDE.md"
   Write-Host "     and fill in the tech stack, commands, and rules."
-  Write-Host "  2. Verify installation: bash ~\.claude\tests\smoke.sh"
+  Write-Host "  2. Verify installation: bash ~\.claude\tests\smoke.sh  (requires Git Bash or WSL)"
   Write-Host "  3. Try it in any project: /software-factory <your feature description>"
 } else {
   if (Test-Path "$TargetPath\CLAUDE.md") {
@@ -121,7 +148,7 @@ if ($User) {
     Write-Host "Next steps:"
     Write-Host "  1. Copy $TargetPath\.claude\CLAUDE.md.template to $TargetPath\CLAUDE.md and customize it"
   }
-  Write-Host "  2. Verify installation: bash .claude\tests\smoke.sh"
+  Write-Host "  2. Verify installation: bash .claude\tests\smoke.sh  (requires Git Bash or WSL)"
   Write-Host "  3. Try it: /software-factory <your feature description>"
 }
 

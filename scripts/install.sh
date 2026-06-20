@@ -71,7 +71,7 @@ if [ "$USER_MODE" = true ]; then
   cp -rn "$SRC/.claude/" "$TARGET/"
 else
   echo "→ Copying .claude/ ..."
-  cp -r "$SRC/.claude" "$TARGET/"
+  cp -rn "$SRC/.claude" "$TARGET/"
 fi
 
 # Root-level CLAUDE.md template

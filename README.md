@@ -74,7 +74,7 @@ cp references/docs/CLAUDE.md.template /your-project/CLAUDE.md
 | 4 | **Backend Builder** | Sonnet | API、服务、数据库迁移、后台任务 | 后端文件 |
 | 5 | **Frontend Builder** | Sonnet | 组件、页面、状态管理、UI 测试 | 前端文件 |
 | 6 | **Test Verifier** | Haiku | 验收测试，逐条验证 Acceptance Criteria | 仅测试文件 |
-| 7 | **Implementation Validator** | Haiku | 10 项质量门禁检查 | 只读 + Minor 修复 |
+| 7 | **Implementation Validator** | Sonnet | 10 项质量门禁检查 | 只读 + Minor 修复 |
 
 ---
 
@@ -129,26 +129,27 @@ feature-factory/
 │   ├── skills/domain-modeling/ 领域建模 Skill（Planner 加载）
 │   ├── commands/             /software-factory 和 /debug 入口
 │   ├── rules/                Builder 规则、Git 工作流、失败恢复
-│   ├── tests/smoke.sh        安装后完整性验证（33 项检查）
+│   ├── tests/smoke.sh        安装后完整性验证（55+ 项检查）
 │   ├── FAQ.md                常见问题排查指南
 │   └── CLAUDE.md.template    目标项目模板
 ├── references/               ★ 规范源（捆绑资源）
 │   ├── agents/               7 Agent 定义
 │   ├── rules/                3 规则文件
-│   ├── prompts/              20 Prompt 模板（Full/Debug/Incremental + 共享）
 │   ├── commands/             2 入口命令
 │   ├── domain-modeling/      领域建模 Skill
 │   └── docs/                 FAQ、CLAUDE.md 模板
 ├── scripts/                  可执行资源
 │   ├── install.sh            Unix/macOS 安装脚本
 │   ├── install.ps1           Windows PowerShell 安装脚本
-│   └── smoke.sh              62 项 Pipeline 完整性检查
+│   └── smoke.sh              55+ 项 Pipeline 完整性检查
 ├── assets/                   图标等静态资源
 ├── CHANGELOG.md
 ├── VERSION
 ├── LICENSE
 └── README.md
 ```
+
+- **向魔搭社区上传时**：`SKILL.md` 是唯一入口，`references/`、`scripts/`、`assets/` 为捆绑资源
 - **在本仓库中**：`.claude/` 是从 `references/` 镜像的副本，确保本项目自身可运行 `/software-factory`
 
 ---
@@ -167,8 +168,8 @@ bash .claude/tests/smoke.sh
 
 | 模式 | Agent 序列 | 预计输入 | 预计输出 | 参考耗时 |
 |------|-----------|:------:|:------:|:------:|
-| Full | Opus×2 + Sonnet×2 + Haiku×2 | ~80K | ~40K | 5-8 min |
-| Debug | Opus + Sonnet + Haiku×2 | ~50K | ~25K | 3-5 min |
-| Incremental | Opus(quick) + Sonnet + Haiku×2 | ~30K | ~15K | 2-4 min |
+| Full | Opus×2 + Sonnet×3 + Haiku×1 | ~90K | ~45K | 5-8 min |
+| Debug | Opus + Sonnet×2 + Haiku×1 | ~55K | ~28K | 3-5 min |
+| Incremental | Opus(quick) + Sonnet×2 + Haiku×1 | ~35K | ~18K | 2-4 min |
 
 **省钱技巧**：小改动用 Incremental、写清楚需求、CLAUDE.md 写完整、信任 Validator 的 Minor 自动修复。

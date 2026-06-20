@@ -92,7 +92,7 @@ echo ""
 echo "── Agents ──"
 
 REQUIRED_AGENT_FIELDS=("name" "description" "tools" "model" "maxTurns")
-VALID_MODELS=("sonnet" "opus" "haiku" "fable")
+VALID_MODELS=("sonnet" "opus" "haiku" "fable")  # fable = Claude Fable 5 (Anthropic model; used by Builder agents for high-reasoning tasks)
 AGENTS=("researcher" "planner" "debugger" "backend-builder" "frontend-builder" "test-verifier" "implementation-validator")
 
 for agent in "${AGENTS[@]}"; do
@@ -229,7 +229,7 @@ else
   done
 
   # Check for broken relative links
-  links=$(grep -oP '\[.*?\]\(\K[^)]+' "$SKILL_FILE" | grep -v '^https\?://' || true)
+  links=$(grep -o '\[[^]]*\]([^)]*)' "$SKILL_FILE" | sed 's/.*(//;s/)$//' | grep -v '^https\?://' || true)
   for link in $links; do
     clean_link=$(echo "$link" | sed 's/#.*//')
     if [ -f "$ROOT/$clean_link" ]; then
@@ -287,8 +287,8 @@ for agent in "backend-builder" "frontend-builder"; do
   fi
 done
 
-# Verifier + Validator → haiku
-for agent in "test-verifier" "implementation-validator"; do
+# Verifier → haiku, Validator → sonnet (security/audit requires deeper analysis)
+for agent in "test-verifier"; do
   model=$(sed -n '/^---$/,/^---$/p' "$AGENT_DIR/$agent.md" | grep "^model:" | sed 's/model: *//')
   if [ "$model" = "haiku" ]; then
     pass "$agent: haiku (efficient)"
@@ -296,6 +296,13 @@ for agent in "test-verifier" "implementation-validator"; do
     warn "$agent: expected haiku, got $model"
   fi
 done
+# Implementation Validator → sonnet (upgraded from haiku — see evaluation-report.md)
+model=$(sed -n '/^---$/,/^---$/p' "$AGENT_DIR/implementation-validator.md" | grep "^model:" | sed 's/model: *//')
+if [ "$model" = "sonnet" ]; then
+  pass "implementation-validator: sonnet (security audit)"
+else
+  warn "implementation-validator: expected sonnet, got $model"
+fi
 
 # ─── 7. Cross-Reference Integrity ──────────────────────────────
 

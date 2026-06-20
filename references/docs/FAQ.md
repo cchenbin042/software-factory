@@ -84,6 +84,8 @@ maxTurns: 15  # 调整为更大或更小的值
 
 默认值是针对中型项目的。如果你的项目特别大或特别小，按上表调整。
 
+> ⚠️ **注意**：Feature Factory 自身的出厂 Agent 定义要求 `maxTurns >= 15`（由 `smoke.sh` 强制检查）。如果你按上表将 Planner 等 Agent 调低到 8–12，`smoke.sh` 会报告 warning。这不是错误——smoke.sh 检查的是 Skill 包自身的出厂设置，你的项目级调整是合规的。如果你希望消除 warning，可以将 smoke.sh 的该检查设为项目级豁免。
+
 **注意**：maxTurns 不是"Agent 能做多少事"的指标，而是"Agent 输出长度 * 交互轮次"的上限。一个 Builder 在 20 turns 内可能已经做了足够多的事——瓶颈通常在输出长度，不在 maxTurns。
 
 ### Q6: Incremental 模式和 Full 模式的边界在哪里？
