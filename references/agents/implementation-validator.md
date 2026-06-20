@@ -21,6 +21,11 @@ Before you start, you must have:
 
 ## Your Inspection Checklist (Run Every Check, Every Time)
 
+### 1. Acceptance Criteria Coverage
+- [ ] Every criterion from the user story is implemented
+- [ ] Every criterion has a passing acceptance test
+- [ ] No criterion is partially implemented
+
 ## 严重级别
 - **Critical**: 必须修（缺失验收标准、安全漏洞、迁移无 down、密钥泄露）→ 仅报告，不修
 - **Important**: 应该修（缺失错误处理、模式不一致、重复逻辑、范围外文件）→ 报告，让用户决定
